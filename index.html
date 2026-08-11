@@ -1,96 +1,400 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Library Camera Test</title>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1"
+  >
+
+  <title>Library Name Scanner</title>
+
+  <!-- Tesseract OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 500px;
-      margin: auto;
-      padding: 20px;
-      text-align: center;
+
+    * {
+      box-sizing: border-box;
     }
 
-    video {
-      width: 100%;
-      border-radius: 15px;
-      background: #111;
-      margin-top: 20px;
+    body {
+      margin: 0;
+      background: #f4f5f7;
+      font-family: Arial, sans-serif;
+      color: #222;
     }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      margin: auto;
+      min-height: 100vh;
+      padding: 24px 18px 50px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #777;
+      margin-bottom: 25px;
+    }
+
+
+    /* CAMERA */
+
+    .camera-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #111;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+
+    #camera {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+
+    /* Dark areas above/below scanner */
+
+    .shade-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 37%;
+      background: rgba(0,0,0,.55);
+      pointer-events: none;
+    }
+
+    .shade-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 37%;
+      background: rgba(0,0,0,.55);
+      pointer-events: none;
+    }
+
+
+    /* Actual scanning rectangle */
+
+    #scanFrame {
+      position: absolute;
+
+      left: 5%;
+      top: 37%;
+
+      width: 90%;
+      height: 26%;
+
+      border: 3px solid white;
+      border-radius: 12px;
+
+      pointer-events: none;
+    }
+
+
+    .scan-label {
+      position: absolute;
+
+      top: calc(37% - 30px);
+      left: 50%;
+
+      transform: translateX(-50%);
+
+      color: white;
+      background: rgba(0,0,0,.75);
+
+      padding: 5px 10px;
+      border-radius: 7px;
+
+      font-size: 12px;
+
+      white-space: nowrap;
+
+      pointer-events: none;
+    }
+
+
+    /* BUTTONS */
 
     button {
       width: 100%;
-      padding: 18px;
       border: none;
-      border-radius: 12px;
+      border-radius: 14px;
+      padding: 17px;
+      margin-top: 12px;
+
+      font-size: 17px;
+      font-weight: bold;
+
+      cursor: pointer;
+    }
+
+    #startButton {
       background: #1f4e78;
       color: white;
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 20px;
     }
+
+    #captureButton {
+      background: #111;
+      color: white;
+    }
+
+    #captureButton:disabled {
+      opacity: .4;
+    }
+
+
+    /* STATUS */
 
     #status {
       margin-top: 15px;
-      padding: 12px;
+      padding: 14px;
+      border-radius: 12px;
+      background: white;
+      text-align: center;
+      display: none;
     }
+
+
+    /* RESULT */
+
+    .result-card {
+      display: none;
+
+      margin-top: 20px;
+
+      background: white;
+
+      border-radius: 18px;
+
+      padding: 20px;
+
+      box-shadow: 0 4px 20px rgba(0,0,0,.06);
+    }
+
+    .result-label {
+      font-size: 12px;
+      color: #777;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
+
+    #studentName {
+      width: 100%;
+
+      border: 1px solid #ccc;
+      border-radius: 12px;
+
+      padding: 15px;
+
+      font-size: 19px;
+      font-weight: bold;
+    }
+
+
+    /* OCR DEBUG PREVIEW */
+
+    .debug {
+      display: none;
+      margin-top: 25px;
+    }
+
+    .debug-title {
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 7px;
+    }
+
+    #previewCanvas {
+      width: 100%;
+      background: white;
+      border: 1px solid #ddd;
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
-  <h1>📚 Camera Test</h1>
+<div class="app">
 
-  <p>Press the button below.</p>
+  <h1>📚 Student Scanner</h1>
 
-  <button onclick="startCamera()">
+  <div class="subtitle">
+    Position only the student's name inside the box.
+  </div>
+
+
+  <div class="camera-wrapper">
+
+    <video
+      id="camera"
+      autoplay
+      playsinline
+      muted>
+    </video>
+
+    <div class="shade-top"></div>
+
+    <div class="shade-bottom"></div>
+
+    <div class="scan-label">
+      ALIGN NAME HERE
+    </div>
+
+    <div id="scanFrame"></div>
+
+  </div>
+
+
+  <button
+    id="startButton"
+    onclick="startCamera()">
+
     📷 Start Camera
+
   </button>
+
+
+  <button
+    id="captureButton"
+    onclick="captureName()"
+    disabled>
+
+    Capture Name
+
+  </button>
+
 
   <div id="status"></div>
 
-  <video
-    id="camera"
-    autoplay
-    playsinline
-    muted>
-  </video>
+
+  <div
+    id="resultCard"
+    class="result-card">
+
+    <div class="result-label">
+      DETECTED NAME
+    </div>
+
+    <input
+      id="studentName"
+      type="text"
+      autocomplete="off"
+    >
+
+  </div>
+
+
+  <!--
+      TEMPORARY DEBUG PREVIEW
+
+      This is important right now because
+      it lets us see EXACTLY what image
+      Tesseract receives.
+  -->
+
+  <div
+    id="debug"
+    class="debug">
+
+    <div class="debug-title">
+      WHAT THE SCANNER READ:
+    </div>
+
+    <canvas id="previewCanvas"></canvas>
+
+  </div>
+
+
+</div>
 
 
 <script>
 
-async function startCamera() {
+let stream = null;
 
-  const status =
-    document.getElementById("status");
+
+/* =========================================
+   START CAMERA
+========================================= */
+
+async function startCamera() {
 
   const video =
     document.getElementById("camera");
 
-  status.innerHTML =
-    "Requesting camera...";
+  const status =
+    document.getElementById("status");
 
   try {
 
-    const stream =
+    status.style.display = "block";
+    status.innerHTML = "Starting camera...";
+
+
+    if (stream) {
+
+      stream
+        .getTracks()
+        .forEach(track => track.stop());
+
+    }
+
+
+    stream =
       await navigator.mediaDevices.getUserMedia({
 
         video: {
+
           facingMode: {
             ideal: "environment"
+          },
+
+          width: {
+            ideal: 1920
+          },
+
+          height: {
+            ideal: 1080
           }
+
         },
 
         audio: false
 
       });
 
+
     video.srcObject = stream;
 
+    await video.play();
+
+
+    document
+      .getElementById("captureButton")
+      .disabled = false;
+
+
     status.innerHTML =
-      "✅ Camera working!";
+      "✓ Camera ready";
 
   }
 
@@ -98,10 +402,401 @@ async function startCamera() {
 
     console.error(error);
 
+    status.style.display = "block";
+
     status.innerHTML =
-      "❌ " +
-      error.name +
-      ": " +
+      "❌ Camera error: " +
+      error.message;
+
+  }
+
+}
+
+
+
+/* =========================================
+   CAPTURE NAME
+========================================= */
+
+async function captureName() {
+
+  const video =
+    document.getElementById("camera");
+
+  const status =
+    document.getElementById("status");
+
+  const canvas =
+    document.getElementById("previewCanvas");
+
+
+  if (
+    !video.videoWidth ||
+    !video.videoHeight
+  ) {
+
+    status.style.display = "block";
+
+    status.innerHTML =
+      "Camera isn't ready.";
+
+    return;
+
+  }
+
+
+  status.style.display = "block";
+
+  status.innerHTML =
+    "📸 Capturing...";
+
+
+  /*
+    ========================================
+    IMPORTANT PART
+
+    The visible box occupies:
+
+    X = 5%
+    Y = 37%
+    Width = 90%
+    Height = 26%
+
+    We capture those exact percentages.
+    ========================================
+  */
+
+
+  const x =
+    video.videoWidth * 0.05;
+
+  const y =
+    video.videoHeight * 0.37;
+
+  const width =
+    video.videoWidth * 0.90;
+
+  const height =
+    video.videoHeight * 0.26;
+
+
+
+  /*
+    Increase resolution for OCR.
+  */
+
+  const scale = 3;
+
+
+  canvas.width =
+    width * scale;
+
+  canvas.height =
+    height * scale;
+
+
+  const ctx =
+    canvas.getContext(
+      "2d",
+      {
+        willReadFrequently: true
+      }
+    );
+
+
+  ctx.drawImage(
+
+    video,
+
+    x,
+    y,
+    width,
+    height,
+
+    0,
+    0,
+    canvas.width,
+    canvas.height
+
+  );
+
+
+  /*
+    SHOW THE CAPTURED AREA.
+
+    For now I WANT this visible.
+
+    It tells us whether the camera
+    rectangle and actual crop match.
+  */
+
+  document
+    .getElementById("debug")
+    .style.display = "block";
+
+
+
+  /* =========================================
+     PREPROCESS IMAGE
+  ========================================= */
+
+
+  status.innerHTML =
+    "Preparing name...";
+
+
+  const imageData =
+    ctx.getImageData(
+
+      0,
+      0,
+
+      canvas.width,
+      canvas.height
+
+    );
+
+
+  const pixels =
+    imageData.data;
+
+
+  /*
+    Grayscale + mild contrast.
+
+    No aggressive black/white threshold.
+  */
+
+
+  for (
+    let i = 0;
+    i < pixels.length;
+    i += 4
+  ) {
+
+    const gray =
+
+      pixels[i] * 0.299 +
+
+      pixels[i + 1] * 0.587 +
+
+      pixels[i + 2] * 0.114;
+
+
+    let value =
+
+      (gray - 128) *
+      1.35 +
+      128;
+
+
+    value =
+
+      Math.max(
+        0,
+        Math.min(
+          255,
+          value
+        )
+      );
+
+
+    pixels[i] =
+      value;
+
+    pixels[i + 1] =
+      value;
+
+    pixels[i + 2] =
+      value;
+
+  }
+
+
+  ctx.putImageData(
+
+    imageData,
+
+    0,
+    0
+
+  );
+
+
+
+  /* =========================================
+     OCR
+  ========================================= */
+
+
+  status.innerHTML =
+    "🔍 Reading name...";
+
+
+  try {
+
+
+    const worker =
+
+      await Tesseract
+        .createWorker("eng");
+
+
+    await worker.setParameters({
+
+      tessedit_pageseg_mode:
+        Tesseract.PSM.SINGLE_LINE,
+
+      tessedit_char_whitelist:
+
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz -'"
+
+    });
+
+
+
+    const result =
+
+      await worker
+        .recognize(canvas);
+
+
+
+    await worker
+      .terminate();
+
+
+
+    console.log(
+      "RAW OCR:",
+      result.data.text
+    );
+
+
+
+    /* =========================================
+       CLEAN RESULT
+    ========================================= */
+
+
+    let name =
+
+      String(
+        result.data.text || ""
+      )
+
+
+      .replace(
+
+        /[^A-Za-zÀ-ÿ'’\-\s]/g,
+
+        " "
+
+      )
+
+
+      .replace(
+
+        /\s+/g,
+
+        " "
+
+      )
+
+
+      .trim();
+
+
+
+    /*
+      Remove tiny random OCR fragments.
+    */
+
+
+    const words =
+
+      name
+        .split(" ")
+        .filter(
+          word =>
+            word.length > 1
+        );
+
+
+    name =
+      words.join(" ");
+
+
+
+    /* =========================================
+       SHOW RESULT
+    ========================================= */
+
+
+    if (
+      name.length >= 3
+    ) {
+
+
+      document
+        .getElementById(
+          "studentName"
+        )
+        .value =
+          name;
+
+
+      document
+        .getElementById(
+          "resultCard"
+        )
+        .style.display =
+          "block";
+
+
+      status.innerHTML =
+        "✓ Name detected";
+
+
+    }
+
+    else {
+
+
+      document
+        .getElementById(
+          "resultCard"
+        )
+        .style.display =
+          "block";
+
+
+      document
+        .getElementById(
+          "studentName"
+        )
+        .value = "";
+
+
+      status.innerHTML =
+
+        "⚠️ Couldn't read the name. " +
+        "Move the ID closer and try again.";
+
+    }
+
+
+  }
+
+  catch (error) {
+
+
+    console.error(error);
+
+
+    status.innerHTML =
+
+      "❌ OCR error: " +
       error.message;
 
   }
@@ -111,4 +806,5 @@ async function startCamera() {
 </script>
 
 </body>
+
 </html>
