@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
 
   <meta
@@ -8,105 +10,229 @@
     content="width=device-width, initial-scale=1"
   >
 
-  <title>Library NFC Test</title>
+  <title>Library</title>
 
   <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
+      background: #f4f5f7;
+      color: #222;
+    }
+
+    .app {
       max-width: 500px;
       margin: auto;
-      padding: 30px 20px;
+      padding: 24px 18px 50px;
+    }
+
+    h1 {
       text-align: center;
-      background: #f5f6f8;
     }
 
     .card {
       background: white;
-      padding: 25px;
+      padding: 22px;
       border-radius: 20px;
-      margin-top: 25px;
+      margin-top: 20px;
     }
 
     button {
       width: 100%;
-      padding: 20px;
+      padding: 17px;
       border: none;
-      border-radius: 15px;
+      border-radius: 14px;
+      margin-top: 12px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .primary {
       background: #1f4e78;
       color: white;
-      font-size: 18px;
+    }
+
+    .dark {
+      background: #111;
+      color: white;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      margin-top: 8px;
+      border: 1px solid #ccc;
+      border-radius: 12px;
+      font-size: 17px;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
       font-weight: bold;
     }
 
     #status {
-      margin-top: 20px;
-      line-height: 1.5;
+      margin-top: 15px;
+      padding: 14px;
+      border-radius: 12px;
+      background: #eee;
     }
 
-    #result {
+    #newStudentBox,
+    #studentFoundBox,
+    #borrowBox {
       display: none;
-      margin-top: 20px;
-      padding: 20px;
-      background: #e8f5e9;
-      border-radius: 15px;
-      text-align: left;
-      word-break: break-all;
     }
+
+    .success {
+      background: #e7f6eb !important;
+      color: #176c2e;
+    }
+
+    .error {
+      background: #fdeaea !important;
+      color: #a22121;
+    }
+
   </style>
+
 </head>
+
 
 <body>
 
+<div class="app">
+
   <h1>📚 Library</h1>
-  <h2>NFC Card Test</h2>
+
 
   <div class="card">
 
-    <p>
-      Press the button, then hold the turnstile
-      card against the back of your phone.
-    </p>
+    <h2>Borrow Book</h2>
 
-    <button onclick="scanCard()">
-      📡 Scan Student Card
+    <button
+      class="primary"
+      onclick="scanNfc()">
+
+      📡 Tap Student Card
+
     </button>
 
+
     <div id="status">
-      Ready to test.
+      Ready.
     </div>
 
-    <div id="result"></div>
+
+    <div id="newStudentBox">
+
+      <label>
+        New student — enter name once
+      </label>
+
+      <input
+        id="newStudentName"
+        type="text"
+        placeholder="Student name"
+      >
+
+      <button
+        class="dark"
+        onclick="saveNewStudent()">
+
+        Save Student
+
+      </button>
+
+    </div>
+
+
+    <div id="studentFoundBox">
+
+      <label>
+        Student
+      </label>
+
+      <input
+        id="studentName"
+        type="text"
+        readonly
+      >
+
+    </div>
+
+
+    <div id="borrowBox">
+
+      <label>
+        Book Barcode / ISBN
+      </label>
+
+      <input
+        id="bookBarcode"
+        type="text"
+        inputmode="numeric"
+        placeholder="Enter book barcode"
+      >
+
+      <button
+        class="primary"
+        onclick="borrowBook()">
+
+        Borrow Book
+
+      </button>
+
+    </div>
 
   </div>
+
+</div>
 
 
 <script>
 
-async function scanCard() {
+/*
+  PUT YOUR APPS SCRIPT /exec URL HERE
+*/
+
+const API_URL =
+  "https://script.google.com/macros/s/AKfycby0730JHX9eS9qmMPvlVvOE0t5yuw7Dr3sQOXiX-GJSVy_t05ISPmNW1azQ5xIMFInu/exec";
+
+
+let currentSerial =
+  null;
+
+
+/* =========================================
+   NFC
+========================================= */
+
+async function scanNfc() {
 
   const status =
     document.getElementById("status");
 
-  const resultBox =
-    document.getElementById("result");
-
-
-  // Check browser support
 
   if (!("NDEFReader" in window)) {
 
+    status.className = "error";
+
     status.innerHTML =
-      "❌ Web NFC is not supported by this browser/device.";
+      "Web NFC is not supported on this browser.";
 
     return;
   }
 
 
   try {
-
-    status.innerHTML =
-      "Starting NFC reader...";
-
 
     const ndef =
       new NDEFReader();
@@ -115,110 +241,455 @@ async function scanCard() {
     await ndef.scan();
 
 
+    status.className = "";
+
     status.innerHTML =
-      "📡 Ready! Hold the card against the back of your phone.";
+      "📡 Hold the student card against the back of the phone...";
 
 
-    ndef.addEventListener(
-      "readingerror",
-      function() {
-
-        status.innerHTML =
-          "⚠️ The phone detected something, but the browser could not read the card.";
-
-      }
-    );
+    ndef.onreading =
+      async event => {
 
 
-    ndef.addEventListener(
-      "reading",
-      function(event) {
-
-        console.log(event);
-
-
-        const serialNumber =
-          event.serialNumber || "No serial number";
+        currentSerial =
+          event.serialNumber;
 
 
         status.innerHTML =
-          "✅ Card detected!";
+          "Card detected. Looking up student...";
 
 
-        let output =
-          "<strong>Serial Number:</strong><br>" +
-          serialNumber;
+        await lookupStudent();
+
+      };
 
 
-        // Try reading NDEF records too
+  } catch (error) {
 
-        if (
-          event.message &&
-          event.message.records
-        ) {
-
-          output +=
-            "<br><br><strong>Records:</strong><br>";
-
-
-          for (
-            const record of
-            event.message.records
-          ) {
-
-            try {
-
-              const decoder =
-                new TextDecoder(
-                  record.encoding || "utf-8"
-                );
-
-
-              output +=
-                decoder.decode(record.data) +
-                "<br>";
-
-            }
-
-            catch (e) {
-
-              output +=
-                "[Record detected]<br>";
-
-            }
-
-          }
-
-        }
-
-
-        resultBox.innerHTML =
-          output;
-
-
-        resultBox.style.display =
-          "block";
-
-      }
-    );
-
-  }
-
-  catch (error) {
-
-    console.error(error);
+    status.className =
+      "error";
 
     status.innerHTML =
-      "❌ " +
-      error.name +
-      ": " +
       error.message;
 
   }
 
 }
 
+
+/* =========================================
+   FIND STUDENT
+========================================= */
+
+async function lookupStudent() {
+
+  try {
+
+    const result =
+      await apiRequest({
+
+        action:
+          "findStudent",
+
+        serialNumber:
+          currentSerial
+
+      });
+
+
+    if (result.found) {
+
+      showStudent(
+        result.studentName
+      );
+
+    }
+
+    else {
+
+      document
+        .getElementById(
+          "newStudentBox"
+        )
+        .style.display =
+          "block";
+
+
+      document
+        .getElementById(
+          "studentFoundBox"
+        )
+        .style.display =
+          "none";
+
+
+      document
+        .getElementById(
+          "borrowBox"
+        )
+        .style.display =
+          "none";
+
+
+      document
+        .getElementById(
+          "status"
+        )
+        .innerHTML =
+          "🆕 New card. Enter the student's name once.";
+
+    }
+
+
+  } catch (error) {
+
+    showError(
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================
+   REGISTER NEW STUDENT
+========================================= */
+
+async function saveNewStudent() {
+
+  const name =
+    document
+      .getElementById(
+        "newStudentName"
+      )
+      .value
+      .trim();
+
+
+  if (!name) {
+
+    showError(
+      "Enter the student's name."
+    );
+
+    return;
+  }
+
+
+  try {
+
+    document
+      .getElementById(
+        "status"
+      )
+      .innerHTML =
+        "Saving student...";
+
+
+    const result =
+      await apiRequest({
+
+        action:
+          "registerStudent",
+
+        serialNumber:
+          currentSerial,
+
+        studentName:
+          name
+
+      });
+
+
+    showStudent(
+      result.studentName
+    );
+
+
+  } catch (error) {
+
+    showError(
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================
+   SHOW STUDENT
+========================================= */
+
+function showStudent(name) {
+
+  document
+    .getElementById(
+      "newStudentBox"
+    )
+    .style.display =
+      "none";
+
+
+  document
+    .getElementById(
+      "studentFoundBox"
+    )
+    .style.display =
+      "block";
+
+
+  document
+    .getElementById(
+      "borrowBox"
+    )
+    .style.display =
+      "block";
+
+
+  document
+    .getElementById(
+      "studentName"
+    )
+    .value =
+      name;
+
+
+  const status =
+    document
+      .getElementById(
+        "status"
+      );
+
+
+  status.className =
+    "success";
+
+
+  status.innerHTML =
+    "✓ Student found: " +
+    escapeHtml(name);
+
+}
+
+
+/* =========================================
+   BORROW BOOK
+========================================= */
+
+async function borrowBook() {
+
+  const barcode =
+    document
+      .getElementById(
+        "bookBarcode"
+      )
+      .value
+      .trim();
+
+
+  if (!barcode) {
+
+    showError(
+      "Enter the book barcode."
+    );
+
+    return;
+  }
+
+
+  try {
+
+    const status =
+      document
+        .getElementById(
+          "status"
+        );
+
+
+    status.className =
+      "";
+
+
+    status.innerHTML =
+      "Saving borrowing transaction...";
+
+
+    const result =
+      await apiRequest({
+
+        action:
+          "borrowBook",
+
+        serialNumber:
+          currentSerial,
+
+        bookBarcode:
+          barcode
+
+      });
+
+
+    if (!result.success) {
+
+      throw new Error(
+        result.error ||
+        "Borrowing failed."
+      );
+
+    }
+
+
+    status.className =
+      "success";
+
+
+    status.innerHTML =
+
+      "✅ Borrowed successfully!" +
+
+      "<br><br>" +
+
+      "<strong>" +
+      escapeHtml(
+        result.studentName
+      ) +
+      "</strong>" +
+
+      "<br>" +
+
+      escapeHtml(
+        result.bookTitle
+      ) +
+
+      "<br>" +
+
+      "Due: " +
+      escapeHtml(
+        result.dueDate
+      );
+
+
+    document
+      .getElementById(
+        "bookBarcode"
+      )
+      .value = "";
+
+
+    /*
+      Reset current student
+      so next student taps their card.
+    */
+
+    currentSerial =
+      null;
+
+
+    document
+      .getElementById(
+        "studentFoundBox"
+      )
+      .style.display =
+        "none";
+
+
+    document
+      .getElementById(
+        "borrowBox"
+      )
+      .style.display =
+        "none";
+
+
+  } catch (error) {
+
+    showError(
+      error.message
+    );
+
+  }
+
+}
+
+
+/* =========================================
+   API
+========================================= */
+
+async function apiRequest(data) {
+
+  const response =
+    await fetch(
+      API_URL,
+      {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
+        body:
+          JSON.stringify(data)
+
+      }
+    );
+
+
+  return await response.json();
+
+}
+
+
+/* =========================================
+   ERROR
+========================================= */
+
+function showError(message) {
+
+  const status =
+    document
+      .getElementById(
+        "status"
+      );
+
+
+  status.className =
+    "error";
+
+
+  status.innerHTML =
+    "❌ " +
+    escapeHtml(message);
+
+}
+
+
+/* =========================================
+   ESCAPE HTML
+========================================= */
+
+function escapeHtml(value) {
+
+  return String(value || "")
+
+    .replace(/&/g, "&amp;")
+
+    .replace(/</g, "&lt;")
+
+    .replace(/>/g, "&gt;")
+
+    .replace(/"/g, "&quot;")
+
+    .replace(/'/g, "&#039;");
+
+}
+
 </script>
 
 </body>
+
 </html>
