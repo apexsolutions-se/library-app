@@ -25,25 +25,104 @@
     }
 
     .app {
+      width: 100%;
       max-width: 500px;
+      min-height: 100vh;
       margin: auto;
       padding: 24px 18px 50px;
     }
 
-    h1 {
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    /* =====================================
+       HOME
+    ===================================== */
+
+    .home-header {
       text-align: center;
-      margin-bottom: 30px;
+      margin-top: 50px;
+      margin-bottom: 45px;
+    }
+
+    .home-icon {
+      font-size: 58px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+    }
+
+    .subtitle {
+      color: #777;
+      margin-top: 8px;
+    }
+
+    .home-button {
+      width: 100%;
+      min-height: 110px;
+      border-radius: 22px;
+      margin-bottom: 18px;
+      border: none;
+      font-size: 21px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .borrow-home {
+      background: #1f4e78;
+      color: white;
+    }
+
+    .return-home {
+      background: white;
+      color: #1f4e78;
+      border: 2px solid #1f4e78;
+    }
+
+    /* =====================================
+       GENERAL
+    ===================================== */
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .back-button {
+      background: transparent;
+      border: none;
+      color: #1f4e78;
+      font-size: 16px;
+      padding: 5px 0;
+      cursor: pointer;
     }
 
     .card {
       background: white;
       padding: 22px;
       border-radius: 20px;
-      margin-top: 20px;
       box-shadow: 0 4px 20px rgba(0,0,0,.05);
     }
 
+    h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+    }
+
     button {
+      font-family: inherit;
+    }
+
+    .button {
       width: 100%;
       padding: 17px;
       border: none;
@@ -69,34 +148,64 @@
       color: #1f4e78;
     }
 
+    label {
+      display: block;
+      margin-top: 18px;
+      margin-bottom: 7px;
+      font-weight: bold;
+    }
+
     input {
       width: 100%;
       padding: 15px;
-      margin-top: 8px;
       border: 1px solid #ccc;
       border-radius: 12px;
       font-size: 17px;
     }
 
-    label {
-      display: block;
-      margin-top: 18px;
-      font-weight: bold;
+    /* =====================================
+       TAP CARD STATE
+    ===================================== */
+
+    .tap-card {
+      padding: 35px 20px;
+      margin-top: 20px;
+      border: 2px dashed #1f4e78;
+      border-radius: 18px;
+      text-align: center;
+      background: #f6f9fc;
+      cursor: pointer;
     }
 
+    .tap-icon {
+      font-size: 45px;
+      margin-bottom: 12px;
+    }
+
+    .tap-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1f4e78;
+    }
+
+    .tap-help {
+      font-size: 13px;
+      color: #777;
+      margin-top: 7px;
+      line-height: 1.4;
+    }
+
+    /* =====================================
+       STATUS
+    ===================================== */
+
     #status {
-      margin-top: 15px;
+      margin-top: 16px;
       padding: 14px;
       border-radius: 12px;
       background: #eee;
       line-height: 1.5;
-    }
-
-    #newStudentBox,
-    #studentFoundBox,
-    #borrowBox,
-    #scannerBox {
-      display: none;
+      text-align: center;
     }
 
     .success {
@@ -109,9 +218,55 @@
       color: #a22121;
     }
 
-    /* ==========================================
+    .loading {
+      background: #fff4d6 !important;
+      color: #755700;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-right: 7px;
+      border: 2px solid rgba(0,0,0,.15);
+      border-top-color: #755700;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: -3px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* =====================================
+       STUDENT
+    ===================================== */
+
+    #newStudentBox,
+    #studentFoundBox,
+    #borrowBox,
+    #scannerBox {
+      display: none;
+    }
+
+    .student-name {
+      font-size: 23px;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #777;
+      margin-top: 5px;
+    }
+
+    /* =====================================
        BARCODE CAMERA
-    ========================================== */
+    ===================================== */
 
     .scanner {
       position: relative;
@@ -153,33 +308,21 @@
       top: 50%;
       height: 2px;
       background: white;
-      opacity: .8;
     }
 
     .scanner-text {
       position: absolute;
-      bottom: 18px;
       left: 0;
       right: 0;
-      text-align: center;
+      bottom: 18px;
       color: white;
+      text-align: center;
       font-weight: bold;
-      text-shadow: 0 1px 4px black;
-    }
-
-    .student-name {
-      font-size: 22px;
-      font-weight: bold;
-      margin-top: 5px;
-    }
-
-    .small {
-      color: #777;
-      font-size: 13px;
-      margin-top: 5px;
+      text-shadow: 0 1px 4px #000;
     }
 
   </style>
+
 </head>
 
 
@@ -187,163 +330,266 @@
 
 <div class="app">
 
-  <h1>📚 Library</h1>
+  <!-- =====================================
+       HOME SCREEN
+  ====================================== -->
 
+  <div
+    id="homeScreen"
+    class="screen active"
+  >
 
-  <div class="card">
+    <div class="home-header">
 
-    <h2>Borrow Book</h2>
+      <div class="home-icon">
+        📚
+      </div>
 
+      <h1>Library</h1>
 
-    <!-- NFC -->
+      <div class="subtitle">
+        Borrow & Return System
+      </div>
+
+    </div>
+
 
     <button
-      id="nfcButton"
-      class="primary"
-      onclick="scanNfc()">
-
-      📡 Tap Student Card
-
+      class="home-button borrow-home"
+      onclick="openBorrow()"
+    >
+      📖 Borrow Book
     </button>
 
 
-    <div id="status">
-      Ready for student card.
-    </div>
+    <button
+      class="home-button return-home"
+      onclick="openReturn()"
+    >
+      ↩️ Return Book
+    </button>
+
+  </div>
 
 
 
-    <!-- NEW STUDENT -->
+  <!-- =====================================
+       BORROW SCREEN
+  ====================================== -->
 
-    <div id="newStudentBox">
+  <div
+    id="borrowScreen"
+    class="screen"
+  >
 
-      <label>
-        New Student
-      </label>
-
-      <div class="small">
-        This card hasn't been registered before.
-        Enter the student's name once.
-      </div>
-
-      <input
-        id="newStudentName"
-        type="text"
-        autocomplete="off"
-        placeholder="Student name"
-      >
+    <div class="topbar">
 
       <button
-        class="dark"
-        onclick="saveNewStudent()">
-
-        Save Student
-
+        class="back-button"
+        onclick="goHome()"
+      >
+        ← Home
       </button>
 
     </div>
 
 
+    <div class="card">
 
-    <!-- FOUND STUDENT -->
+      <h2>Borrow Book</h2>
 
-    <div id="studentFoundBox">
 
-      <label>
-        Student
-      </label>
+      <!-- WAITING FOR STUDENT -->
 
       <div
-        id="displayStudentName"
-        class="student-name">
-      </div>
+        id="tapCardBox"
+        class="tap-card"
+        onclick="scanNfc()"
+      >
 
-    </div>
-
-
-
-    <!-- BORROW SECTION -->
-
-    <div id="borrowBox">
-
-      <label>
-        Book
-      </label>
-
-
-      <button
-        class="dark"
-        onclick="startBarcodeScanner()">
-
-        📷 Scan Book Barcode
-
-      </button>
-
-
-
-      <!-- CAMERA -->
-
-      <div id="scannerBox">
-
-        <div class="scanner">
-
-          <video
-            id="barcodeCamera"
-            autoplay
-            playsinline
-            muted>
-          </video>
-
-
-          <div class="scanner-overlay">
-
-            <div class="scan-area"></div>
-
-            <div class="scan-line"></div>
-
-            <div class="scanner-text">
-              Align barcode inside the box
-            </div>
-
-          </div>
-
+        <div class="tap-icon">
+          📡
         </div>
 
+        <div class="tap-title">
+          Tap Student Card
+        </div>
+
+        <div class="tap-help">
+          Hold the student's card against
+          the back of the phone.
+        </div>
+
+      </div>
+
+
+      <div id="status">
+        Ready.
+      </div>
+
+
+
+      <!-- NEW STUDENT -->
+
+      <div id="newStudentBox">
+
+        <label>
+          New Student
+        </label>
+
+        <div class="small">
+          Enter the student's name once.
+          Their card will be remembered next time.
+        </div>
+
+        <input
+          id="newStudentName"
+          type="text"
+          autocomplete="off"
+          placeholder="Student name"
+        >
 
         <button
-          class="secondary"
-          onclick="stopBarcodeScanner()">
-
-          Cancel Scanner
-
+          class="button dark"
+          onclick="saveNewStudent()"
+        >
+          Save Student
         </button>
 
       </div>
 
 
 
-      <!-- BARCODE VALUE -->
+      <!-- FOUND STUDENT -->
 
-      <label for="bookBarcode">
-        Barcode / ISBN
-      </label>
+      <div id="studentFoundBox">
 
-      <input
-        id="bookBarcode"
-        type="text"
-        inputmode="numeric"
-        autocomplete="off"
-        placeholder="Barcode will appear here"
-      >
+        <label>
+          Student
+        </label>
 
+        <div
+          id="displayStudentName"
+          class="student-name"
+        ></div>
+
+      </div>
+
+
+
+      <!-- BOOK -->
+
+      <div id="borrowBox">
+
+        <button
+          class="button dark"
+          onclick="startBarcodeScanner()"
+        >
+          📷 Scan Book Barcode
+        </button>
+
+
+        <div id="scannerBox">
+
+          <div class="scanner">
+
+            <video
+              id="barcodeCamera"
+              autoplay
+              playsinline
+              muted
+            ></video>
+
+
+            <div class="scanner-overlay">
+
+              <div class="scan-area"></div>
+
+              <div class="scan-line"></div>
+
+              <div class="scanner-text">
+                Align book barcode inside the box
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <button
+            class="button secondary"
+            onclick="stopBarcodeScanner()"
+          >
+            Cancel Scanner
+          </button>
+
+        </div>
+
+
+        <label for="bookBarcode">
+          Barcode / ISBN
+        </label>
+
+        <input
+          id="bookBarcode"
+          type="text"
+          inputmode="numeric"
+          autocomplete="off"
+          placeholder="Barcode will appear here"
+        >
+
+
+        <button
+          id="borrowButton"
+          class="button primary"
+          onclick="borrowBook()"
+        >
+          Borrow Book
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+
+  <!-- =====================================
+       RETURN SCREEN
+  ====================================== -->
+
+  <div
+    id="returnScreen"
+    class="screen"
+  >
+
+    <div class="topbar">
 
       <button
-        id="borrowButton"
-        class="primary"
-        onclick="borrowBook()">
+        class="back-button"
+        onclick="goHome()"
+      >
+        ← Home
+      </button>
 
-        Borrow Book
+    </div>
 
+
+    <div class="card">
+
+      <h2>Return Book</h2>
+
+      <p class="small">
+        We'll connect the return barcode
+        scanner next.
+      </p>
+
+      <button
+        class="button dark"
+        onclick="alert('Return scanner is our next step!')"
+      >
+        📷 Scan Book to Return
       </button>
 
     </div>
@@ -355,12 +601,13 @@
 
 <script>
 
-/* =====================================================
-   GLOBAL VARIABLES
-===================================================== */
+/* ==========================================
+   CONFIG
+========================================== */
 
 const API_URL =
   "https://script.google.com/macros/s/AKfycbz-ytfnzaoduBeY-xEg5muZXU9RRaa0GRrq7sROsFiHWVPcUzcwyZOAmRciPCRK0FOQ/exec";
+
 
 let nfcReader = null;
 let nfcStarted = false;
@@ -374,9 +621,59 @@ let scanningBarcode = false;
 let lastDetectedBarcode = null;
 
 
-/* =====================================================
+/* ==========================================
+   NAVIGATION
+========================================== */
+
+function showScreen(id) {
+
+  document
+    .querySelectorAll(".screen")
+    .forEach(
+      screen =>
+        screen.classList.remove("active")
+    );
+
+
+  document
+    .getElementById(id)
+    .classList.add("active");
+
+}
+
+
+function openBorrow() {
+
+  showScreen("borrowScreen");
+
+  resetBorrowScreen();
+
+}
+
+
+function openReturn() {
+
+  stopBarcodeScanner();
+
+  showScreen("returnScreen");
+
+}
+
+
+function goHome() {
+
+  stopBarcodeScanner();
+
+  currentSerial = null;
+
+  showScreen("homeScreen");
+
+}
+
+
+/* ==========================================
    NFC
-===================================================== */
+========================================== */
 
 async function scanNfc() {
 
@@ -395,8 +692,8 @@ async function scanNfc() {
 
 
   /*
-    If NFC is already active,
-    do not start a second reader.
+    Reader is already running.
+    Just wait for the next card.
   */
 
   if (nfcStarted) {
@@ -404,13 +701,20 @@ async function scanNfc() {
     status.className = "";
 
     status.innerHTML =
-      "📡 Ready. Tap the next student's card.";
+      "📡 Waiting for student card...";
 
     return;
   }
 
 
   try {
+
+    status.className =
+      "loading";
+
+    status.innerHTML =
+      '<span class="spinner"></span>Starting card reader...';
+
 
     nfcReader =
       new NDEFReader();
@@ -419,51 +723,44 @@ async function scanNfc() {
     await nfcReader.scan();
 
 
-    nfcStarted = true;
-
-
-    document
-      .getElementById("nfcButton")
-      .innerText =
-        "📡 NFC Reader Active";
+    nfcStarted =
+      true;
 
 
     status.className = "";
 
     status.innerHTML =
-      "📡 Ready. Tap the student's card.";
+      "📡 Waiting for student card...";
 
-
-    /*
-      This listener stays running for the
-      entire checkout session.
-    */
 
     nfcReader.addEventListener(
       "reading",
       async event => {
 
         /*
-          Don't process a second NFC event
-          while we're already handling one.
+          Ignore NFC while not on
+          the Borrow screen.
         */
 
-        if (processingCard) {
+        if (
+          !document
+            .getElementById("borrowScreen")
+            .classList.contains("active")
+        ) {
           return;
         }
 
 
-        /*
-          If a student is already active,
-          ignore accidental extra NFC reads.
-        */
-
-        if (currentSerial) {
+        if (
+          processingCard ||
+          currentSerial
+        ) {
           return;
         }
 
 
-        processingCard = true;
+        processingCard =
+          true;
 
 
         try {
@@ -475,7 +772,7 @@ async function scanNfc() {
           if (!serial) {
 
             showError(
-              "Card detected, but no serial number was available."
+              "Card detected but no serial number was available."
             );
 
             return;
@@ -486,10 +783,12 @@ async function scanNfc() {
             serial;
 
 
-          status.className = "";
+          status.className =
+            "loading";
+
 
           status.innerHTML =
-            "Card detected. Looking up student...";
+            '<span class="spinner"></span>Finding student...';
 
 
           await lookupStudent();
@@ -509,10 +808,10 @@ async function scanNfc() {
         finally {
 
           setTimeout(
-            function() {
+            () => {
               processingCard = false;
             },
-            700
+            600
           );
 
         }
@@ -525,11 +824,9 @@ async function scanNfc() {
       "readingerror",
       function() {
 
-        status.className =
-          "error";
-
-        status.innerHTML =
-          "⚠️ Card detected, but it couldn't be read. Try again.";
+        showError(
+          "Card detected but couldn't be read. Try again."
+        );
 
       }
     );
@@ -538,8 +835,12 @@ async function scanNfc() {
 
   catch (error) {
 
-    nfcStarted = false;
-    nfcReader = null;
+    nfcStarted =
+      false;
+
+    nfcReader =
+      null;
+
 
     showError(
       error.message
@@ -550,9 +851,9 @@ async function scanNfc() {
 }
 
 
-/* =====================================================
-   LOOK UP STUDENT
-===================================================== */
+/* ==========================================
+   STUDENT LOOKUP
+========================================== */
 
 async function lookupStudent() {
 
@@ -581,6 +882,12 @@ async function lookupStudent() {
     else {
 
       document
+        .getElementById("tapCardBox")
+        .style.display =
+          "none";
+
+
+      document
         .getElementById("newStudentBox")
         .style.display =
           "block";
@@ -605,7 +912,7 @@ async function lookupStudent() {
       status.className = "";
 
       status.innerHTML =
-        "🆕 New card. Enter the student's name once.";
+        "🆕 New card detected";
 
 
       document
@@ -618,7 +925,9 @@ async function lookupStudent() {
 
   catch (error) {
 
-    currentSerial = null;
+    currentSerial =
+      null;
+
 
     showError(
       error.message
@@ -629,9 +938,9 @@ async function lookupStudent() {
 }
 
 
-/* =====================================================
-   REGISTER NEW STUDENT
-===================================================== */
+/* ==========================================
+   NEW STUDENT
+========================================== */
 
 async function saveNewStudent() {
 
@@ -652,16 +961,18 @@ async function saveNewStudent() {
   }
 
 
+  const status =
+    document.getElementById("status");
+
+
   try {
 
-    const status =
-      document.getElementById("status");
+    status.className =
+      "loading";
 
-
-    status.className = "";
 
     status.innerHTML =
-      "Saving student...";
+      '<span class="spinner"></span>Saving student...';
 
 
     const result =
@@ -681,7 +992,8 @@ async function saveNewStudent() {
 
     document
       .getElementById("newStudentName")
-      .value = "";
+      .value =
+        "";
 
 
     showStudent(
@@ -701,11 +1013,17 @@ async function saveNewStudent() {
 }
 
 
-/* =====================================================
-   SHOW STUDENT
-===================================================== */
+/* ==========================================
+   STUDENT FOUND
+========================================== */
 
 function showStudent(name) {
+
+  document
+    .getElementById("tapCardBox")
+    .style.display =
+      "none";
+
 
   document
     .getElementById("newStudentBox")
@@ -740,14 +1058,9 @@ function showStudent(name) {
 
 
   status.innerHTML =
-    "✓ Student identified: <strong>" +
-    escapeHtml(name) +
-    "</strong>";
+    "✓ " +
+    escapeHtml(name);
 
-
-  /*
-    Automatically open the book scanner.
-  */
 
   setTimeout(
     startBarcodeScanner,
@@ -757,22 +1070,13 @@ function showStudent(name) {
 }
 
 
-/* =====================================================
-   START BARCODE SCANNER
-===================================================== */
+/* ==========================================
+   BARCODE CAMERA
+========================================== */
 
 async function startBarcodeScanner() {
 
-  const status =
-    document.getElementById("status");
-
-
   if (!currentSerial) {
-
-    showError(
-      "Scan a student card first."
-    );
-
     return;
   }
 
@@ -780,7 +1084,7 @@ async function startBarcodeScanner() {
   if (!("BarcodeDetector" in window)) {
 
     showError(
-      "Automatic barcode scanning isn't supported by this browser. You can still enter the barcode manually."
+      "Automatic barcode scanning isn't supported. Enter the barcode manually."
     );
 
     return;
@@ -795,12 +1099,6 @@ async function startBarcodeScanner() {
     const supportedFormats =
       await BarcodeDetector
         .getSupportedFormats();
-
-
-    console.log(
-      "Supported barcode formats:",
-      supportedFormats
-    );
 
 
     const desiredFormats = [
@@ -832,8 +1130,7 @@ async function startBarcodeScanner() {
 
 
     barcodeStream =
-      await navigator
-        .mediaDevices
+      await navigator.mediaDevices
         .getUserMedia({
 
           video: {
@@ -884,10 +1181,14 @@ async function startBarcodeScanner() {
       null;
 
 
+    const status =
+      document.getElementById("status");
+
+
     status.className = "";
 
     status.innerHTML =
-      "📷 Point the camera at the book barcode.";
+      "📷 Scan the book barcode";
 
 
     scanBarcodeFrame();
@@ -896,12 +1197,10 @@ async function startBarcodeScanner() {
 
   catch (error) {
 
-    console.error(error);
-
     stopBarcodeScanner();
 
     showError(
-      "Could not start barcode scanner: " +
+      "Could not start camera: " +
       error.message
     );
 
@@ -909,10 +1208,6 @@ async function startBarcodeScanner() {
 
 }
 
-
-/* =====================================================
-   CONTINUOUS BARCODE DETECTION
-===================================================== */
 
 async function scanBarcodeFrame() {
 
@@ -942,16 +1237,12 @@ async function scanBarcodeFrame() {
 
       if (
         barcodes &&
-        barcodes.length > 0
+        barcodes.length
       ) {
-
-        const barcode =
-          barcodes[0];
-
 
         const value =
           String(
-            barcode.rawValue || ""
+            barcodes[0].rawValue || ""
           ).trim();
 
 
@@ -982,7 +1273,7 @@ async function scanBarcodeFrame() {
   catch (error) {
 
     console.log(
-      "Barcode detection frame error:",
+      "Barcode frame error:",
       error
     );
 
@@ -999,10 +1290,6 @@ async function scanBarcodeFrame() {
 
 }
 
-
-/* =====================================================
-   BARCODE FOUND
-===================================================== */
 
 function barcodeDetected(value) {
 
@@ -1024,10 +1311,7 @@ function barcodeDetected(value) {
 
 
   status.innerHTML =
-    "✓ Book barcode scanned" +
-    "<br><strong>" +
-    escapeHtml(value) +
-    "</strong>";
+    "✓ Barcode scanned";
 
 
   if ("vibrate" in navigator) {
@@ -1038,10 +1322,6 @@ function barcodeDetected(value) {
 
 }
 
-
-/* =====================================================
-   STOP BARCODE SCANNER
-===================================================== */
 
 function stopBarcodeScanner() {
 
@@ -1095,9 +1375,9 @@ function stopBarcodeScanner() {
 }
 
 
-/* =====================================================
-   BORROW BOOK
-===================================================== */
+/* ==========================================
+   BORROW
+========================================== */
 
 async function borrowBook() {
 
@@ -1111,7 +1391,7 @@ async function borrowBook() {
   if (!currentSerial) {
 
     showError(
-      "Scan a student card first."
+      "Tap a student card first."
     );
 
     return;
@@ -1121,41 +1401,44 @@ async function borrowBook() {
   if (!barcode) {
 
     showError(
-      "Scan the book barcode first."
+      "Scan a book barcode first."
     );
 
     return;
   }
 
 
-  const borrowButton =
+  const button =
     document.getElementById(
       "borrowButton"
     );
 
 
+  const status =
+    document.getElementById("status");
+
+
   try {
 
-    /*
-      Prevent double-clicks.
-    */
-
-    if (borrowButton) {
-      borrowButton.disabled = true;
-    }
+    button.disabled =
+      true;
 
 
     stopBarcodeScanner();
 
 
-    const status =
-      document.getElementById("status");
+    /*
+      THIS is the loading message while
+      Google Books / Open Library is searched.
+    */
 
+    status.className =
+      "loading";
 
-    status.className = "";
 
     status.innerHTML =
-      "Saving borrowing transaction...";
+      '<span class="spinner"></span>' +
+      'Looking up book details...';
 
 
     const result =
@@ -1183,78 +1466,6 @@ async function borrowBook() {
     }
 
 
-    /*
-      Save values before resetting.
-    */
-
-    const borrowedStudent =
-      result.studentName;
-
-    const borrowedTitle =
-      result.bookTitle ||
-      "Book";
-
-    const dueDate =
-      result.dueDate;
-
-
-    /*
-      RESET FOR NEXT STUDENT
-    */
-
-    currentSerial =
-      null;
-
-    lastDetectedBarcode =
-      null;
-
-
-    document
-      .getElementById("bookBarcode")
-      .value =
-        "";
-
-
-    document
-      .getElementById("studentFoundBox")
-      .style.display =
-        "none";
-
-
-    document
-      .getElementById("borrowBox")
-      .style.display =
-        "none";
-
-
-    document
-      .getElementById("newStudentBox")
-      .style.display =
-        "none";
-
-
-    document
-      .getElementById("newStudentName")
-      .value =
-        "";
-
-
-    document
-      .getElementById("displayStudentName")
-      .innerText =
-        "";
-
-
-    /*
-      NFC reader stays active.
-    */
-
-    document
-      .getElementById("nfcButton")
-      .innerText =
-        "📡 NFC Reader Active";
-
-
     status.className =
       "success";
 
@@ -1262,27 +1473,32 @@ async function borrowBook() {
     status.innerHTML =
       "✅ <strong>Borrowed!</strong>" +
       "<br>" +
-      escapeHtml(borrowedStudent) +
+      escapeHtml(result.studentName) +
       "<br>" +
-      escapeHtml(borrowedTitle) +
+      escapeHtml(result.bookTitle || "Book") +
       "<br>" +
       "Due: " +
-      escapeHtml(dueDate) +
-      "<br><br>" +
-      "📡 <strong>Ready for next student.</strong>";
+      escapeHtml(result.dueDate);
 
-
-    /*
-      A small vibration confirms checkout.
-    */
 
     if ("vibrate" in navigator) {
 
       navigator.vibrate(
-        [100, 70, 100]
+        [100, 60, 100]
       );
 
     }
+
+
+    /*
+      Leave success visible briefly,
+      then return to clean Tap Student Card.
+    */
+
+    setTimeout(
+      resetBorrowScreen,
+      1800
+    );
 
   }
 
@@ -1296,18 +1512,90 @@ async function borrowBook() {
 
   finally {
 
-    if (borrowButton) {
-      borrowButton.disabled = false;
-    }
+    button.disabled =
+      false;
 
   }
 
 }
 
 
-/* =====================================================
+/* ==========================================
+   RESET BORROW SCREEN
+========================================== */
+
+function resetBorrowScreen() {
+
+  stopBarcodeScanner();
+
+
+  currentSerial =
+    null;
+
+
+  lastDetectedBarcode =
+    null;
+
+
+  document
+    .getElementById("bookBarcode")
+    .value =
+      "";
+
+
+  document
+    .getElementById("newStudentName")
+    .value =
+      "";
+
+
+  document
+    .getElementById("displayStudentName")
+    .innerText =
+      "";
+
+
+  document
+    .getElementById("newStudentBox")
+    .style.display =
+      "none";
+
+
+  document
+    .getElementById("studentFoundBox")
+    .style.display =
+      "none";
+
+
+  document
+    .getElementById("borrowBox")
+    .style.display =
+      "none";
+
+
+  document
+    .getElementById("tapCardBox")
+    .style.display =
+      "block";
+
+
+  const status =
+    document.getElementById("status");
+
+
+  status.className = "";
+
+  status.innerHTML =
+    nfcStarted
+      ? "Ready for student card."
+      : "Tap above to start.";
+
+}
+
+
+/* ==========================================
    API
-===================================================== */
+========================================== */
 
 async function apiRequest(data) {
 
@@ -1316,8 +1604,7 @@ async function apiRequest(data) {
       API_URL,
       {
 
-        method:
-          "POST",
+        method: "POST",
 
         headers: {
 
@@ -1364,9 +1651,9 @@ async function apiRequest(data) {
 }
 
 
-/* =====================================================
+/* ==========================================
    ERROR
-===================================================== */
+========================================== */
 
 function showError(message) {
 
@@ -1385,9 +1672,9 @@ function showError(message) {
 }
 
 
-/* =====================================================
+/* ==========================================
    ESCAPE HTML
-===================================================== */
+========================================== */
 
 function escapeHtml(value) {
 
@@ -1395,35 +1682,15 @@ function escapeHtml(value) {
     value || ""
   )
 
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-
-    .replace(
-      /</g,
-      "&lt;"
-    )
-
-    .replace(
-      />/g,
-      "&gt;"
-    )
-
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
 
 </script>
 
 </body>
-
 </html>
