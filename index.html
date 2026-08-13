@@ -40,6 +40,7 @@
       display: block;
     }
 
+
     /* =====================================
        HOME
     ===================================== */
@@ -87,6 +88,7 @@
       border: 2px solid #1f4e78;
     }
 
+
     /* =====================================
        GENERAL
     ===================================== */
@@ -133,6 +135,11 @@
       cursor: pointer;
     }
 
+    .button:disabled {
+      opacity: .5;
+      cursor: default;
+    }
+
     .primary {
       background: #1f4e78;
       color: white;
@@ -163,8 +170,9 @@
       font-size: 17px;
     }
 
+
     /* =====================================
-       TAP CARD STATE
+       TAP CARD
     ===================================== */
 
     .tap-card {
@@ -195,11 +203,12 @@
       line-height: 1.4;
     }
 
+
     /* =====================================
        STATUS
     ===================================== */
 
-    #status {
+    .status {
       margin-top: 16px;
       padding: 14px;
       border-radius: 12px;
@@ -241,8 +250,9 @@
       }
     }
 
+
     /* =====================================
-       STUDENT
+       STUDENT / BORROW
     ===================================== */
 
     #newStudentBox,
@@ -262,7 +272,9 @@
       font-size: 13px;
       color: #777;
       margin-top: 5px;
+      line-height: 1.5;
     }
+
 
     /* =====================================
        BARCODE CAMERA
@@ -321,6 +333,69 @@
       text-shadow: 0 1px 4px #000;
     }
 
+
+    /* =====================================
+       RETURN BOOK LIST
+    ===================================== */
+
+    #returnStudentBox,
+    #returnBooksBox {
+      display: none;
+    }
+
+    .return-heading {
+      margin-top: 24px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      font-weight: bold;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .book-item {
+      border: 1px solid #e2e5e8;
+      border-radius: 16px;
+      padding: 17px;
+      margin-top: 12px;
+      background: #fff;
+    }
+
+    .book-title {
+      font-size: 18px;
+      font-weight: bold;
+      line-height: 1.35;
+    }
+
+    .book-details {
+      color: #777;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-top: 7px;
+    }
+
+    .return-button {
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px;
+      border: none;
+      border-radius: 11px;
+      background: #1f4e78;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .no-books {
+      text-align: center;
+      padding: 28px 15px;
+      color: #777;
+      background: #f7f8f9;
+      border-radius: 14px;
+      margin-top: 15px;
+    }
+
   </style>
 
 </head>
@@ -330,8 +405,9 @@
 
 <div class="app">
 
+
   <!-- =====================================
-       HOME SCREEN
+       HOME
   ====================================== -->
 
   <div
@@ -399,12 +475,10 @@
       <h2>Borrow Book</h2>
 
 
-      <!-- WAITING FOR STUDENT -->
-
       <div
         id="tapCardBox"
         class="tap-card"
-        onclick="scanNfc()"
+        onclick="scanBorrowNfc()"
       >
 
         <div class="tap-icon">
@@ -423,10 +497,12 @@
       </div>
 
 
-      <div id="status">
+      <div
+        id="status"
+        class="status"
+      >
         Ready.
       </div>
-
 
 
       <!-- NEW STUDENT -->
@@ -459,8 +535,7 @@
       </div>
 
 
-
-      <!-- FOUND STUDENT -->
+      <!-- STUDENT FOUND -->
 
       <div id="studentFoundBox">
 
@@ -474,7 +549,6 @@
         ></div>
 
       </div>
-
 
 
       <!-- BOOK -->
@@ -580,17 +654,60 @@
 
       <h2>Return Book</h2>
 
-      <p class="small">
-        We'll connect the return barcode
-        scanner next.
-      </p>
 
-      <button
-        class="button dark"
-        onclick="alert('Return scanner is our next step!')"
+      <div
+        id="returnTapCardBox"
+        class="tap-card"
+        onclick="scanReturnNfc()"
       >
-        📷 Scan Book to Return
-      </button>
+
+        <div class="tap-icon">
+          📡
+        </div>
+
+        <div class="tap-title">
+          Tap Student Card
+        </div>
+
+        <div class="tap-help">
+          We'll show all books currently
+          borrowed by this student.
+        </div>
+
+      </div>
+
+
+      <div
+        id="returnStatus"
+        class="status"
+      >
+        Ready.
+      </div>
+
+
+      <div id="returnStudentBox">
+
+        <div class="return-heading">
+          Student
+        </div>
+
+        <div
+          id="returnStudentName"
+          class="student-name"
+        ></div>
+
+      </div>
+
+
+      <div id="returnBooksBox">
+
+        <div class="return-heading">
+          Currently Borrowed
+        </div>
+
+        <div id="returnBooksList"></div>
+
+      </div>
 
     </div>
 
@@ -600,6 +717,7 @@
 
 
 <script>
+
 
 /* ==========================================
    CONFIG
@@ -614,6 +732,7 @@ let nfcController = null;
 let nfcScanning = false;
 
 let currentSerial = null;
+let currentReturnSerial = null;
 
 let barcodeStream = null;
 let barcodeDetector = null;
@@ -633,26 +752,35 @@ function showScreen(id) {
       screen.classList.remove("active")
     );
 
+
   document
     .getElementById(id)
     .classList.add("active");
+
 }
 
 
 function openBorrow() {
 
+  stopNfcScanner();
+  stopBarcodeScanner();
+
   showScreen("borrowScreen");
 
   resetBorrowScreen();
+
 }
 
 
 function openReturn() {
 
-  stopBarcodeScanner();
   stopNfcScanner();
+  stopBarcodeScanner();
 
   showScreen("returnScreen");
+
+  resetReturnScreen();
+
 }
 
 
@@ -662,16 +790,18 @@ function goHome() {
   stopNfcScanner();
 
   currentSerial = null;
+  currentReturnSerial = null;
 
   showScreen("homeScreen");
+
 }
 
 
 /* ==========================================
-   NFC
+   BORROW NFC
 ========================================== */
 
-async function scanNfc() {
+async function scanBorrowNfc() {
 
   const status =
     document.getElementById("status");
@@ -679,20 +809,16 @@ async function scanNfc() {
 
   if (!("NDEFReader" in window)) {
 
-    showError(
+    showBorrowError(
       "NFC scanning is not supported on this browser."
     );
 
     return;
+
   }
 
 
-  /*
-    Always start a fresh NFC session.
-  */
-
   stopNfcScanner();
-
 
   currentSerial = null;
 
@@ -700,7 +826,8 @@ async function scanNfc() {
   try {
 
     status.className =
-      "loading";
+      "status loading";
+
 
     status.innerHTML =
       '<span class="spinner"></span>Waiting for student card...';
@@ -719,11 +846,12 @@ async function scanNfc() {
     });
 
 
-    nfcScanning =
-      true;
+    nfcScanning = true;
 
 
-    status.className = "";
+    status.className =
+      "status";
+
 
     status.innerHTML =
       "📡 Hold the student's card against the back of the phone.";
@@ -733,9 +861,6 @@ async function scanNfc() {
       "reading",
       async event => {
 
-        /*
-          Only process one card.
-        */
 
         if (!nfcScanning) {
           return;
@@ -748,21 +873,16 @@ async function scanNfc() {
 
         if (!serial) {
 
-          showError(
+          showBorrowError(
             "Card detected but no serial number was available."
           );
 
           stopNfcScanner();
 
           return;
+
         }
 
-
-        /*
-          We have the card.
-          End NFC immediately so this
-          session cannot interfere later.
-        */
 
         currentSerial =
           serial;
@@ -772,7 +892,7 @@ async function scanNfc() {
 
 
         status.className =
-          "loading";
+          "status loading";
 
 
         status.innerHTML =
@@ -787,10 +907,9 @@ async function scanNfc() {
 
         catch (error) {
 
-          currentSerial =
-            null;
+          currentSerial = null;
 
-          showError(
+          showBorrowError(
             error.message
           );
 
@@ -804,7 +923,7 @@ async function scanNfc() {
       "readingerror",
       function() {
 
-        showError(
+        showBorrowError(
           "Card detected but couldn't be read. Try again."
         );
 
@@ -817,14 +936,163 @@ async function scanNfc() {
 
   catch (error) {
 
-    /*
-      AbortError is expected when
-      we intentionally stop scanning.
-    */
+    if (error.name !== "AbortError") {
+
+      showBorrowError(
+        error.message
+      );
+
+    }
+
+    stopNfcScanner();
+
+  }
+
+}
+
+
+/* ==========================================
+   RETURN NFC
+========================================== */
+
+async function scanReturnNfc() {
+
+  const status =
+    document.getElementById("returnStatus");
+
+
+  if (!("NDEFReader" in window)) {
+
+    showReturnError(
+      "NFC scanning is not supported on this browser."
+    );
+
+    return;
+
+  }
+
+
+  stopNfcScanner();
+
+  currentReturnSerial = null;
+
+
+  try {
+
+    status.className =
+      "status loading";
+
+
+    status.innerHTML =
+      '<span class="spinner"></span>Waiting for student card...';
+
+
+    nfcReader =
+      new NDEFReader();
+
+
+    nfcController =
+      new AbortController();
+
+
+    await nfcReader.scan({
+      signal: nfcController.signal
+    });
+
+
+    nfcScanning = true;
+
+
+    status.className =
+      "status";
+
+
+    status.innerHTML =
+      "📡 Hold the student's card against the back of the phone.";
+
+
+    nfcReader.addEventListener(
+      "reading",
+      async event => {
+
+
+        if (!nfcScanning) {
+          return;
+        }
+
+
+        const serial =
+          event.serialNumber;
+
+
+        if (!serial) {
+
+          showReturnError(
+            "Card detected but no serial number was available."
+          );
+
+          stopNfcScanner();
+
+          return;
+
+        }
+
+
+        currentReturnSerial =
+          serial;
+
+
+        stopNfcScanner();
+
+
+        status.className =
+          "status loading";
+
+
+        status.innerHTML =
+          '<span class="spinner"></span>Loading borrowed books...';
+
+
+        try {
+
+          await loadBorrowedBooks();
+
+        }
+
+        catch (error) {
+
+          currentReturnSerial = null;
+
+          showReturnError(
+            error.message
+          );
+
+        }
+
+      }
+    );
+
+
+    nfcReader.addEventListener(
+      "readingerror",
+      function() {
+
+        showReturnError(
+          "Card detected but couldn't be read. Try again."
+        );
+
+        stopNfcScanner();
+
+      }
+    );
+
+  }
+
+  catch (error) {
 
     if (error.name !== "AbortError") {
 
-      showError(
+      showReturnError(
         error.message
       );
 
@@ -863,20 +1131,17 @@ function stopNfcScanner() {
   }
 
 
-  nfcReader =
-    null;
+  nfcReader = null;
 
-  nfcController =
-    null;
+  nfcController = null;
 
-  nfcScanning =
-    false;
+  nfcScanning = false;
 
 }
 
 
 /* ==========================================
-   STUDENT LOOKUP
+   BORROW STUDENT LOOKUP
 ========================================== */
 
 async function lookupStudent() {
@@ -933,7 +1198,9 @@ async function lookupStudent() {
         document.getElementById("status");
 
 
-      status.className = "";
+      status.className =
+        "status";
+
 
       status.innerHTML =
         "🆕 New card detected";
@@ -949,11 +1216,10 @@ async function lookupStudent() {
 
   catch (error) {
 
-    currentSerial =
-      null;
+    currentSerial = null;
 
 
-    showError(
+    showBorrowError(
       error.message
     );
 
@@ -977,11 +1243,12 @@ async function saveNewStudent() {
 
   if (!name) {
 
-    showError(
+    showBorrowError(
       "Enter the student's name."
     );
 
     return;
+
   }
 
 
@@ -992,7 +1259,7 @@ async function saveNewStudent() {
   try {
 
     status.className =
-      "loading";
+      "status loading";
 
 
     status.innerHTML =
@@ -1028,7 +1295,7 @@ async function saveNewStudent() {
 
   catch (error) {
 
-    showError(
+    showBorrowError(
       error.message
     );
 
@@ -1038,7 +1305,7 @@ async function saveNewStudent() {
 
 
 /* ==========================================
-   STUDENT FOUND
+   BORROW STUDENT FOUND
 ========================================== */
 
 function showStudent(name) {
@@ -1078,7 +1345,7 @@ function showStudent(name) {
 
 
   status.className =
-    "success";
+    "status success";
 
 
   status.innerHTML =
@@ -1095,7 +1362,7 @@ function showStudent(name) {
 
 
 /* ==========================================
-   BARCODE CAMERA
+   BARCODE SCANNER
 ========================================== */
 
 async function startBarcodeScanner() {
@@ -1107,11 +1374,12 @@ async function startBarcodeScanner() {
 
   if (!("BarcodeDetector" in window)) {
 
-    showError(
+    showBorrowError(
       "Automatic barcode scanning isn't supported. Enter the barcode manually."
     );
 
     return;
+
   }
 
 
@@ -1197,19 +1465,18 @@ async function startBarcodeScanner() {
         "block";
 
 
-    scanningBarcode =
-      true;
+    scanningBarcode = true;
 
-
-    lastDetectedBarcode =
-      null;
+    lastDetectedBarcode = null;
 
 
     const status =
       document.getElementById("status");
 
 
-    status.className = "";
+    status.className =
+      "status";
+
 
     status.innerHTML =
       "📷 Scan the book barcode";
@@ -1223,7 +1490,8 @@ async function startBarcodeScanner() {
 
     stopBarcodeScanner();
 
-    showError(
+
+    showBorrowError(
       "Could not start camera: " +
       error.message
     );
@@ -1331,7 +1599,7 @@ function barcodeDetected(value) {
 
 
   status.className =
-    "success";
+    "status success";
 
 
   status.innerHTML =
@@ -1349,8 +1617,7 @@ function barcodeDetected(value) {
 
 function stopBarcodeScanner() {
 
-  scanningBarcode =
-    false;
+  scanningBarcode = false;
 
 
   if (barcodeStream) {
@@ -1363,8 +1630,7 @@ function stopBarcodeScanner() {
       );
 
 
-    barcodeStream =
-      null;
+    barcodeStream = null;
 
   }
 
@@ -1377,8 +1643,7 @@ function stopBarcodeScanner() {
 
   if (video) {
 
-    video.srcObject =
-      null;
+    video.srcObject = null;
 
   }
 
@@ -1400,7 +1665,7 @@ function stopBarcodeScanner() {
 
 
 /* ==========================================
-   BORROW
+   BORROW BOOK
 ========================================== */
 
 async function borrowBook() {
@@ -1414,21 +1679,23 @@ async function borrowBook() {
 
   if (!currentSerial) {
 
-    showError(
+    showBorrowError(
       "Tap a student card first."
     );
 
     return;
+
   }
 
 
   if (!barcode) {
 
-    showError(
+    showBorrowError(
       "Scan a book barcode first."
     );
 
     return;
+
   }
 
 
@@ -1444,15 +1711,14 @@ async function borrowBook() {
 
   try {
 
-    button.disabled =
-      true;
+    button.disabled = true;
 
 
     stopBarcodeScanner();
 
 
     status.className =
-      "loading";
+      "status loading";
 
 
     status.innerHTML =
@@ -1486,7 +1752,7 @@ async function borrowBook() {
 
 
     status.className =
-      "success";
+      "status success";
 
 
     status.innerHTML =
@@ -1509,10 +1775,6 @@ async function borrowBook() {
     }
 
 
-    /*
-      Show confirmation briefly.
-    */
-
     setTimeout(
       resetBorrowScreen,
       1800
@@ -1522,7 +1784,7 @@ async function borrowBook() {
 
   catch (error) {
 
-    showError(
+    showBorrowError(
       error.message
     );
 
@@ -1530,8 +1792,7 @@ async function borrowBook() {
 
   finally {
 
-    button.disabled =
-      false;
+    button.disabled = false;
 
   }
 
@@ -1539,26 +1800,18 @@ async function borrowBook() {
 
 
 /* ==========================================
-   RESET BORROW SCREEN
+   RESET BORROW
 ========================================== */
 
 function resetBorrowScreen() {
-
-  /*
-    Shut down anything from the
-    previous checkout.
-  */
 
   stopBarcodeScanner();
   stopNfcScanner();
 
 
-  currentSerial =
-    null;
+  currentSerial = null;
 
-
-  lastDetectedBarcode =
-    null;
+  lastDetectedBarcode = null;
 
 
   document
@@ -1607,7 +1860,409 @@ function resetBorrowScreen() {
     document.getElementById("status");
 
 
-  status.className = "";
+  status.className =
+    "status";
+
+
+  status.innerHTML =
+    "Ready for student card.";
+
+}
+
+
+/* ==========================================
+   LOAD RETURN BOOKS
+========================================== */
+
+async function loadBorrowedBooks() {
+
+  const status =
+    document.getElementById(
+      "returnStatus"
+    );
+
+
+  try {
+
+    const result =
+      await apiRequest({
+
+        action:
+          "getStudentBorrowedBooks",
+
+        serialNumber:
+          currentReturnSerial
+
+      });
+
+
+    if (
+      !result.studentFound
+    ) {
+
+      throw new Error(
+        "This student card is not registered."
+      );
+
+    }
+
+
+    document
+      .getElementById("returnTapCardBox")
+      .style.display =
+        "none";
+
+
+    document
+      .getElementById("returnStudentBox")
+      .style.display =
+        "block";
+
+
+    document
+      .getElementById("returnBooksBox")
+      .style.display =
+        "block";
+
+
+    document
+      .getElementById("returnStudentName")
+      .innerText =
+        result.studentName;
+
+
+    renderBorrowedBooks(
+      result.books || []
+    );
+
+
+    status.className =
+      "status success";
+
+
+    if (
+      result.books &&
+      result.books.length
+    ) {
+
+      status.innerHTML =
+        "✓ " +
+        escapeHtml(result.studentName) +
+        " — select a book to return.";
+
+    }
+
+    else {
+
+      status.innerHTML =
+        "✓ " +
+        escapeHtml(result.studentName);
+
+    }
+
+  }
+
+  catch (error) {
+
+    currentReturnSerial =
+      null;
+
+
+    showReturnError(
+      error.message
+    );
+
+  }
+
+}
+
+
+/* ==========================================
+   RENDER RETURN BOOKS
+========================================== */
+
+function renderBorrowedBooks(books) {
+
+  const list =
+    document.getElementById(
+      "returnBooksList"
+    );
+
+
+  list.innerHTML = "";
+
+
+  if (!books.length) {
+
+    list.innerHTML =
+      '<div class="no-books">' +
+      'No books are currently borrowed by this student.' +
+      '<br><br>' +
+      '<button class="button secondary" onclick="resetReturnScreen()">' +
+      'Tap Another Student' +
+      '</button>' +
+      '</div>';
+
+    return;
+
+  }
+
+
+  books.forEach(book => {
+
+    const item =
+      document.createElement("div");
+
+
+    item.className =
+      "book-item";
+
+
+    item.id =
+      "loan-" +
+      book.transactionId;
+
+
+    item.innerHTML =
+
+      '<div class="book-title">' +
+      escapeHtml(
+        book.title ||
+        "Book"
+      ) +
+      '</div>' +
+
+      '<div class="book-details">' +
+
+      'Borrowed: ' +
+      escapeHtml(
+        book.borrowedDate || "-"
+      ) +
+
+      '<br>' +
+
+      'Due: ' +
+      escapeHtml(
+        book.dueDate || "-"
+      ) +
+
+      '</div>' +
+
+      '<button ' +
+      'class="return-button" ' +
+      'onclick="returnTransaction(\'' +
+      escapeJs(book.transactionId) +
+      '\', this)">' +
+
+      '↩ Return Book' +
+
+      '</button>';
+
+
+    list.appendChild(item);
+
+  });
+
+}
+
+
+/* ==========================================
+   RETURN TRANSACTION
+========================================== */
+
+async function returnTransaction(
+  transactionId,
+  button
+) {
+
+  const status =
+    document.getElementById(
+      "returnStatus"
+    );
+
+
+  try {
+
+    button.disabled = true;
+
+    button.innerHTML =
+      "Returning...";
+
+
+    status.className =
+      "status loading";
+
+
+    status.innerHTML =
+      '<span class="spinner"></span>Returning book...';
+
+
+    const result =
+      await apiRequest({
+
+        action:
+          "returnBorrowedBook",
+
+        transactionId:
+          transactionId
+
+      });
+
+
+    if (!result.success) {
+
+      throw new Error(
+        result.error ||
+        "Return failed."
+      );
+
+    }
+
+
+    status.className =
+      "status success";
+
+
+    status.innerHTML =
+      "✅ <strong>Returned!</strong>" +
+      "<br>" +
+      escapeHtml(
+        result.bookTitle ||
+        "Book"
+      );
+
+
+    if ("vibrate" in navigator) {
+
+      navigator.vibrate(
+        [100, 60, 100]
+      );
+
+    }
+
+
+    /*
+      Remove returned book from list.
+    */
+
+    const item =
+      document.getElementById(
+        "loan-" +
+        transactionId
+      );
+
+
+    if (item) {
+
+      item.remove();
+
+    }
+
+
+    /*
+      Check whether any books remain.
+    */
+
+    const remaining =
+      document
+        .querySelectorAll(
+          "#returnBooksList .book-item"
+        );
+
+
+    if (!remaining.length) {
+
+      document
+        .getElementById("returnBooksList")
+        .innerHTML =
+
+          '<div class="no-books">' +
+
+          'All books for this student have been returned.' +
+
+          '<br><br>' +
+
+          '<button class="button primary" onclick="resetReturnScreen()">' +
+
+          'Tap Next Student' +
+
+          '</button>' +
+
+          '</div>';
+
+    }
+
+  }
+
+  catch (error) {
+
+    button.disabled = false;
+
+    button.innerHTML =
+      "↩ Return Book";
+
+
+    showReturnError(
+      error.message
+    );
+
+  }
+
+}
+
+
+/* ==========================================
+   RESET RETURN
+========================================== */
+
+function resetReturnScreen() {
+
+  stopNfcScanner();
+
+
+  currentReturnSerial =
+    null;
+
+
+  document
+    .getElementById("returnStudentName")
+    .innerText =
+      "";
+
+
+  document
+    .getElementById("returnBooksList")
+    .innerHTML =
+      "";
+
+
+  document
+    .getElementById("returnStudentBox")
+    .style.display =
+      "none";
+
+
+  document
+    .getElementById("returnBooksBox")
+    .style.display =
+      "none";
+
+
+  document
+    .getElementById("returnTapCardBox")
+    .style.display =
+      "block";
+
+
+  const status =
+    document.getElementById(
+      "returnStatus"
+    );
+
+
+  status.className =
+    "status";
+
 
   status.innerHTML =
     "Ready for student card.";
@@ -1626,7 +2281,8 @@ async function apiRequest(data) {
       API_URL,
       {
 
-        method: "POST",
+        method:
+          "POST",
 
         headers: {
 
@@ -1674,17 +2330,36 @@ async function apiRequest(data) {
 
 
 /* ==========================================
-   ERROR
+   ERRORS
 ========================================== */
 
-function showError(message) {
+function showBorrowError(message) {
 
   const status =
     document.getElementById("status");
 
 
   status.className =
-    "error";
+    "status error";
+
+
+  status.innerHTML =
+    "❌ " +
+    escapeHtml(message);
+
+}
+
+
+function showReturnError(message) {
+
+  const status =
+    document.getElementById(
+      "returnStatus"
+    );
+
+
+  status.className =
+    "status error";
 
 
   status.innerHTML =
@@ -1695,7 +2370,7 @@ function showError(message) {
 
 
 /* ==========================================
-   ESCAPE HTML
+   ESCAPE
 ========================================== */
 
 function escapeHtml(value) {
@@ -1709,6 +2384,18 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+
+}
+
+
+function escapeJs(value) {
+
+  return String(
+    value || ""
+  )
+
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'");
 
 }
 
