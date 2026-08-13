@@ -34,13 +34,40 @@
       color: #222;
     }
 
-    .app {
-      width: 100%;
-      max-width: 500px;
-      min-height: 100vh;
-      margin: auto;
-      padding: 24px 18px 50px;
-    }
+.app {
+  width: 100%;
+  max-width: 500px;
+  min-height: 100vh;
+  margin: auto;
+  padding: 24px 18px 20px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+    .app-credit {
+  margin-top: auto;
+  padding: 35px 10px 5px;
+
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.6;
+
+  color: #a0a4a8;
+}
+
+.app-credit span {
+  display: block;
+}
+
+.app-credit a {
+  color: #8b9095;
+  text-decoration: none;
+}
+
+.app-credit a:hover {
+  color: #1f4e78;
+}
 
     .screen {
       display: none;
@@ -406,6 +433,9 @@
       margin-top: 15px;
     }
 
+
+
+
   </style>
 
 </head>
@@ -722,7 +752,17 @@
     </div>
 
   </div>
+  <!-- APP CREDIT -->
 
+  <footer class="app-credit">
+    <span>Designed &amp; developed by Katelyn Mowday<span>
+
+    <a href="mailto:mowdaykatelyn@gmail.com">
+      mowdaykatelyn@gmail.com
+    </a>
+  </footer>
+
+  
 </div>
 
 
