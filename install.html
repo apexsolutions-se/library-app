@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <title>Install Library App</title>
+
+  <meta
+    name="theme-color"
+    content="#1f4e78"
+  >
+
+  <link
+    rel="manifest"
+    href="manifest.json"
+  >
+
+  <link
+    rel="apple-touch-icon"
+    href="icon-192.png"
+  >
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f5f7;
+      color: #222;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 520px;
+      min-height: 100vh;
+      margin: auto;
+      padding: 36px 20px 90px;
+    }
+
+    .hero {
+      text-align: center;
+    }
+
+    .app-icon {
+      width: 110px;
+      height: 110px;
+      border-radius: 24px;
+      object-fit: cover;
+      box-shadow: 0 10px 30px rgba(0,0,0,.12);
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      font-size: 30px;
+      margin: 0;
+    }
+
+    .subtitle {
+      margin-top: 10px;
+      color: #74797f;
+      line-height: 1.5;
+    }
+
+    .card {
+      margin-top: 32px;
+      background: white;
+      border-radius: 22px;
+      padding: 22px;
+      box-shadow: 0 5px 22px rgba(0,0,0,.05);
+    }
+
+    .button {
+      width: 100%;
+      padding: 17px;
+      border: none;
+      border-radius: 14px;
+      margin-top: 12px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .install-button {
+      background: #1f4e78;
+      color: white;
+      display: none;
+    }
+
+    .open-button {
+      background: #111;
+      color: white;
+    }
+
+    .instructions {
+      margin-top: 22px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+    }
+
+    .instructions h3 {
+      margin-top: 0;
+      font-size: 16px;
+    }
+
+    .instructions p {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .qr-section {
+      margin-top: 28px;
+      text-align: center;
+    }
+
+    .qr-section h3 {
+      margin-bottom: 8px;
+    }
+
+    .qr-help {
+      color: #777;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    #qrCode {
+      width: 210px;
+      height: 210px;
+      margin: 18px auto 0;
+      padding: 12px;
+      background: white;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #qrCode img {
+      max-width: 100%;
+      display: block;
+    }
+
+    .features {
+      margin-top: 28px;
+      background: #eef3f7;
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .features strong {
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    .feature-line {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.8;
+    }
+
+    .credit {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+
+      width: 100%;
+      max-width: 520px;
+
+      padding: 10px 15px calc(10px + env(safe-area-inset-bottom));
+
+      text-align: center;
+      font-size: 10px;
+      line-height: 1.5;
+
+      color: #9a9ea3;
+      background: rgba(244, 245, 247, .97);
+    }
+
+    .credit span {
+      display: block;
+    }
+
+    .credit a {
+      color: #7f858b;
+      text-decoration: none;
+    }
+
+    #browserMessage {
+      margin-top: 16px;
+      padding: 13px;
+      border-radius: 12px;
+      background: #fff4d6;
+      color: #755700;
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+    }
+
+  </style>
+
+</head>
+
+
+<body>
+
+<div class="page">
+
+  <div class="hero">
+
+    <img
+      src="icon-512.png"
+      class="app-icon"
+      alt="Library App"
+    >
+
+    <h1>
+      Library Borrow & Return
+    </h1>
+
+    <div class="subtitle">
+      A simple library system for borrowing and returning books using student cards.
+    </div>
+
+  </div>
+
+
+  <div class="card">
+
+    <button
+      id="installButton"
+      class="button install-button"
+    >
+      Install Library App
+    </button>
+
+
+    <button
+      class="button open-button"
+      onclick="openLibrary()"
+    >
+      Open Library App
+    </button>
+
+
+    <div
+      id="browserMessage"
+    ></div>
+
+
+    <div class="instructions">
+
+      <h3>
+        Install on Android
+      </h3>
+
+      <p>
+        Open this page in Chrome. If the Install button appears above,
+        tap it. If not, tap the Chrome menu <strong>⋮</strong> and choose
+        <strong>Install app</strong> or <strong>Add to Home screen</strong>.
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <div class="features">
+
+    <strong>
+      Library features
+    </strong>
+
+    <div class="feature-line">
+      📡 Student NFC card scanning
+    </div>
+
+    <div class="feature-line">
+      📷 Live book barcode scanning
+    </div>
+
+    <div class="feature-line">
+      📖 Automatic book title lookup
+    </div>
+
+    <div class="feature-line">
+      ↩️ Student-based book returns
+    </div>
+
+    <div class="feature-line">
+      📊 Google Sheets transaction records
+    </div>
+
+  </div>
+
+
+  <div class="qr-section">
+
+    <h3>
+      Open on your phone
+    </h3>
+
+    <div class="qr-help">
+      Scan this QR code with an Android phone to open the Library app.
+    </div>
+
+
+    <div id="qrCode">
+
+      <img
+        id="qrImage"
+        alt="Library QR Code"
+      >
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<footer class="credit">
+
+  <span>
+    Designed &amp; developed by Katelyn Imperial
+  </span>
+
+  <a href="mailto:mowdaykatelyn@gmail.com">
+    MOWDAYKATELYN@GMAIL.COM
+  </a>
+
+</footer>
+
+
+<script>
+
+/* ==========================================
+   CONFIG
+========================================== */
+
+/*
+  Because install.html is inside the
+  same folder as index.html, "./" opens
+  the main Library app.
+*/
+
+const LIBRARY_URL =
+  new URL(
+    "./",
+    window.location.href
+  ).href;
+
+
+/* ==========================================
+   OPEN APP
+========================================== */
+
+function openLibrary() {
+
+  window.location.href =
+    LIBRARY_URL;
+
+}
+
+
+/* ==========================================
+   QR CODE
+========================================== */
+
+/*
+  Uses Google's chart URL only to create
+  a simple QR image.
+*/
+
+const qrImage =
+  document.getElementById(
+    "qrImage"
+  );
+
+
+qrImage.src =
+  "https://quickchart.io/qr?size=300&text=" +
+  encodeURIComponent(
+    LIBRARY_URL
+  );
+
+
+/* ==========================================
+   PWA INSTALL
+========================================== */
+
+let deferredPrompt = null;
+
+
+window.addEventListener(
+  "beforeinstallprompt",
+  event => {
+
+    /*
+      Stop Chrome from showing its
+      own mini install prompt.
+    */
+
+    event.preventDefault();
+
+
+    deferredPrompt =
+      event;
+
+
+    document
+      .getElementById(
+        "installButton"
+      )
+      .style.display =
+        "block";
+
+  }
+);
+
+
+/* ==========================================
+   INSTALL BUTTON
+========================================== */
+
+document
+  .getElementById(
+    "installButton"
+  )
+  .addEventListener(
+    "click",
+    async function() {
+
+      if (!deferredPrompt) {
+
+        showBrowserMessage(
+          "Open this page in Chrome and use the browser menu to install the app."
+        );
+
+        return;
+
+      }
+
+
+      deferredPrompt.prompt();
+
+
+      const result =
+        await deferredPrompt.userChoice;
+
+
+      console.log(
+        "Install choice:",
+        result.outcome
+      );
+
+
+      deferredPrompt =
+        null;
+
+
+      document
+        .getElementById(
+          "installButton"
+        )
+        .style.display =
+          "none";
+
+    }
+  );
+
+
+/* ==========================================
+   ALREADY INSTALLED
+========================================== */
+
+window.addEventListener(
+  "appinstalled",
+  function() {
+
+    showBrowserMessage(
+      "✓ Library app installed successfully."
+    );
+
+  }
+);
+
+
+/* ==========================================
+   BASIC BROWSER GUIDANCE
+========================================== */
+
+function showBrowserMessage(text) {
+
+  const message =
+    document.getElementById(
+      "browserMessage"
+    );
+
+
+  message.innerHTML =
+    text;
+
+
+  message.style.display =
+    "block";
+
+}
+
+
+/*
+  If this is already running as
+  the installed PWA, the install
+  page isn't really necessary.
+*/
+
+if (
+  window.matchMedia(
+    "(display-mode: standalone)"
+  ).matches
+) {
+
+  showBrowserMessage(
+    "The Library app is already running as an installed app."
+  );
+
+}
+
+
+/* ==========================================
+   SERVICE WORKER
+========================================== */
+
+if (
+  "serviceWorker" in navigator
+) {
+
+  window.addEventListener(
+    "load",
+    function() {
+
+      navigator
+        .serviceWorker
+        .register(
+          "./service-worker.js"
+        )
+        .catch(
+          function(error) {
+
+            console.log(
+              "Service worker error:",
+              error
+            );
+
+          }
+        );
+
+    }
+  );
+
+}
+
+</script>
+
+</body>
+
+</html>
