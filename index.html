@@ -355,29 +355,23 @@
 
 <script>
 
-
-let nfcReader = null;
-let nfcStarted = false;
-let processingCard = false;
-
 /* =====================================================
-   CONFIGURATION
+   GLOBAL VARIABLES
 ===================================================== */
 
 const API_URL =
   "https://script.google.com/macros/s/AKfycbz-ytfnzaoduBeY-xEg5muZXU9RRaa0GRrq7sROsFiHWVPcUzcwyZOAmRciPCRK0FOQ/exec";
 
+let nfcReader = null;
+let nfcStarted = false;
+let processingCard = false;
 
 let currentSerial = null;
 
 let barcodeStream = null;
-
 let barcodeDetector = null;
-
 let scanningBarcode = false;
-
 let lastDetectedBarcode = null;
-
 
 
 /* =====================================================
@@ -401,9 +395,8 @@ async function scanNfc() {
 
 
   /*
-    If NFC is already running,
-    DON'T start another reader.
-    Just tell the user to tap the next card.
+    If NFC is already active,
+    do not start a second reader.
   */
 
   if (nfcStarted) {
@@ -429,6 +422,12 @@ async function scanNfc() {
     nfcStarted = true;
 
 
+    document
+      .getElementById("nfcButton")
+      .innerText =
+        "📡 NFC Reader Active";
+
+
     status.className = "";
 
     status.innerHTML =
@@ -436,23 +435,30 @@ async function scanNfc() {
 
 
     /*
-      This listener stays active.
-
-      Every new card tap triggers this.
+      This listener stays running for the
+      entire checkout session.
     */
 
     nfcReader.addEventListener(
       "reading",
       async event => {
 
-
         /*
-          Prevent the same physical tap
-          from being processed twice while
-          we're still looking up the student.
+          Don't process a second NFC event
+          while we're already handling one.
         */
 
         if (processingCard) {
+          return;
+        }
+
+
+        /*
+          If a student is already active,
+          ignore accidental extra NFC reads.
+        */
+
+        if (currentSerial) {
           return;
         }
 
@@ -462,11 +468,11 @@ async function scanNfc() {
 
         try {
 
-          currentSerial =
+          const serial =
             event.serialNumber;
 
 
-          if (!currentSerial) {
+          if (!serial) {
 
             showError(
               "Card detected, but no serial number was available."
@@ -474,6 +480,10 @@ async function scanNfc() {
 
             return;
           }
+
+
+          currentSerial =
+            serial;
 
 
           status.className = "";
@@ -484,10 +494,11 @@ async function scanNfc() {
 
           await lookupStudent();
 
-
         }
 
         catch (error) {
+
+          currentSerial = null;
 
           showError(
             error.message
@@ -497,16 +508,11 @@ async function scanNfc() {
 
         finally {
 
-          /*
-            Small delay before another
-            card can be processed.
-          */
-
           setTimeout(
             function() {
               processingCard = false;
             },
-            1000
+            700
           );
 
         }
@@ -528,10 +534,12 @@ async function scanNfc() {
       }
     );
 
-
   }
 
   catch (error) {
+
+    nfcStarted = false;
+    nfcReader = null;
 
     showError(
       error.message
@@ -610,6 +618,8 @@ async function lookupStudent() {
 
   catch (error) {
 
+    currentSerial = null;
+
     showError(
       error.message
     );
@@ -617,7 +627,6 @@ async function lookupStudent() {
   }
 
 }
-
 
 
 /* =====================================================
@@ -692,7 +701,6 @@ async function saveNewStudent() {
 }
 
 
-
 /* =====================================================
    SHOW STUDENT
 ===================================================== */
@@ -732,14 +740,13 @@ function showStudent(name) {
 
 
   status.innerHTML =
-    "✓ Student identified";
+    "✓ Student identified: <strong>" +
+    escapeHtml(name) +
+    "</strong>";
 
 
   /*
-    Automatically start the book scanner.
-
-    This saves another tap during
-    busy borrowing periods.
+    Automatically open the book scanner.
   */
 
   setTimeout(
@@ -748,7 +755,6 @@ function showStudent(name) {
   );
 
 }
-
 
 
 /* =====================================================
@@ -761,10 +767,15 @@ async function startBarcodeScanner() {
     document.getElementById("status");
 
 
-  /*
-    Chrome/Android currently provides
-    BarcodeDetector on supported devices.
-  */
+  if (!currentSerial) {
+
+    showError(
+      "Scan a student card first."
+    );
+
+    return;
+  }
+
 
   if (!("BarcodeDetector" in window)) {
 
@@ -792,32 +803,20 @@ async function startBarcodeScanner() {
     );
 
 
-    /*
-      Books normally use EAN-13.
-
-      We include several common formats
-      so the scanner can also handle
-      library-generated barcodes later.
-    */
-
     const desiredFormats = [
-
       "ean_13",
       "ean_8",
       "code_128",
       "code_39",
       "upc_a",
       "upc_e"
-
     ];
 
 
     const formats =
       desiredFormats.filter(
         format =>
-          supportedFormats.includes(
-            format
-          )
+          supportedFormats.includes(format)
       );
 
 
@@ -885,9 +884,7 @@ async function startBarcodeScanner() {
       null;
 
 
-    status.className =
-      "";
-
+    status.className = "";
 
     status.innerHTML =
       "📷 Point the camera at the book barcode.";
@@ -901,6 +898,8 @@ async function startBarcodeScanner() {
 
     console.error(error);
 
+    stopBarcodeScanner();
+
     showError(
       "Could not start barcode scanner: " +
       error.message
@@ -909,7 +908,6 @@ async function startBarcodeScanner() {
   }
 
 }
-
 
 
 /* =====================================================
@@ -934,9 +932,7 @@ async function scanBarcodeFrame() {
 
   try {
 
-    if (
-      video.readyState >= 2
-    ) {
+    if (video.readyState >= 2) {
 
       const barcodes =
         await barcodeDetector.detect(
@@ -1004,17 +1000,11 @@ async function scanBarcodeFrame() {
 }
 
 
-
 /* =====================================================
    BARCODE FOUND
 ===================================================== */
 
 function barcodeDetected(value) {
-
-  /*
-    Stop immediately so the same barcode
-    isn't detected repeatedly.
-  */
 
   stopBarcodeScanner();
 
@@ -1034,33 +1024,19 @@ function barcodeDetected(value) {
 
 
   status.innerHTML =
-
     "✓ Book barcode scanned" +
-
-    "<br>" +
-
-    "<strong>" +
+    "<br><strong>" +
     escapeHtml(value) +
     "</strong>";
 
 
-  /*
-    Small vibration on Android
-    so staff know it scanned
-    without needing to stare
-    at the screen.
-  */
-
-  if (
-    "vibrate" in navigator
-  ) {
+  if ("vibrate" in navigator) {
 
     navigator.vibrate(100);
 
   }
 
 }
-
 
 
 /* =====================================================
@@ -1103,13 +1079,20 @@ function stopBarcodeScanner() {
   }
 
 
-  document
-    .getElementById("scannerBox")
-    .style.display =
+  const scannerBox =
+    document.getElementById(
+      "scannerBox"
+    );
+
+
+  if (scannerBox) {
+
+    scannerBox.style.display =
       "none";
 
-}
+  }
 
+}
 
 
 /* =====================================================
@@ -1145,7 +1128,25 @@ async function borrowBook() {
   }
 
 
+  const borrowButton =
+    document.getElementById(
+      "borrowButton"
+    );
+
+
   try {
+
+    /*
+      Prevent double-clicks.
+    */
+
+    if (borrowButton) {
+      borrowButton.disabled = true;
+    }
+
+
+    stopBarcodeScanner();
+
 
     const status =
       document.getElementById("status");
@@ -1182,104 +1183,108 @@ async function borrowBook() {
     }
 
 
+    /*
+      Save values before resetting.
+    */
+
+    const borrowedStudent =
+      result.studentName;
+
+    const borrowedTitle =
+      result.bookTitle ||
+      "Book";
+
+    const dueDate =
+      result.dueDate;
+
+
+    /*
+      RESET FOR NEXT STUDENT
+    */
+
+    currentSerial =
+      null;
+
+    lastDetectedBarcode =
+      null;
+
+
+    document
+      .getElementById("bookBarcode")
+      .value =
+        "";
+
+
+    document
+      .getElementById("studentFoundBox")
+      .style.display =
+        "none";
+
+
+    document
+      .getElementById("borrowBox")
+      .style.display =
+        "none";
+
+
+    document
+      .getElementById("newStudentBox")
+      .style.display =
+        "none";
+
+
+    document
+      .getElementById("newStudentName")
+      .value =
+        "";
+
+
+    document
+      .getElementById("displayStudentName")
+      .innerText =
+        "";
+
+
+    /*
+      NFC reader stays active.
+    */
+
+    document
+      .getElementById("nfcButton")
+      .innerText =
+        "📡 NFC Reader Active";
+
+
     status.className =
       "success";
 
 
     status.innerHTML =
-
       "✅ <strong>Borrowed!</strong>" +
-
       "<br>" +
-
-      escapeHtml(
-        result.studentName
-      ) +
-
+      escapeHtml(borrowedStudent) +
       "<br>" +
-
+      escapeHtml(borrowedTitle) +
+      "<br>" +
       "Due: " +
-
-      escapeHtml(
-        result.dueDate
-      );
+      escapeHtml(dueDate) +
+      "<br><br>" +
+      "📡 <strong>Ready for next student.</strong>";
 
 
     /*
-      Reset for next student.
+      A small vibration confirms checkout.
     */
 
-    /*
-  Reset checkout,
-  but KEEP NFC scanner running.
-*/
+    if ("vibrate" in navigator) {
 
-currentSerial = null;
+      navigator.vibrate(
+        [100, 70, 100]
+      );
 
-lastDetectedBarcode = null;
+    }
 
-
-document
-  .getElementById("bookBarcode")
-  .value = "";
-
-
-document
-  .getElementById("studentFoundBox")
-  .style.display = "none";
-
-
-document
-  .getElementById("borrowBox")
-  .style.display = "none";
-
-
-document
-  .getElementById("newStudentBox")
-  .style.display = "none";
-
-
-document
-  .getElementById("newStudentName")
-  .value = "";
-
-
-/*
-  NFC is already listening,
-  so don't restart it.
-*/
-
-document
-  .getElementById("nfcButton")
-  .innerText =
-    "📡 NFC Reader Active";
-
-
-const status =
-  document.getElementById("status");
-
-
-status.className =
-  "success";
-
-
-status.innerHTML =
-
-  "✅ Borrowed!" +
-
-  "<br>" +
-
-  escapeHtml(result.studentName) +
-
-  "<br>" +
-
-  "Due: " +
-
-  escapeHtml(result.dueDate) +
-
-  "<br><br>" +
-
-  "📡 <strong>Ready for next student.</strong>";
+  }
 
   catch (error) {
 
@@ -1289,8 +1294,15 @@ status.innerHTML =
 
   }
 
-}
+  finally {
 
+    if (borrowButton) {
+      borrowButton.disabled = false;
+    }
+
+  }
+
+}
 
 
 /* =====================================================
@@ -1321,6 +1333,16 @@ async function apiRequest(data) {
     );
 
 
+  if (!response.ok) {
+
+    throw new Error(
+      "Server error: " +
+      response.status
+    );
+
+  }
+
+
   const result =
     await response.json();
 
@@ -1342,7 +1364,6 @@ async function apiRequest(data) {
 }
 
 
-
 /* =====================================================
    ERROR
 ===================================================== */
@@ -1362,7 +1383,6 @@ function showError(message) {
     escapeHtml(message);
 
 }
-
 
 
 /* =====================================================
