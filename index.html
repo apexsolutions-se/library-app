@@ -356,6 +356,10 @@
 <script>
 
 
+let nfcReader = null;
+let nfcStarted = false;
+let processingCard = false;
+
 /* =====================================================
    CONFIGURATION
 ===================================================== */
@@ -396,36 +400,133 @@ async function scanNfc() {
   }
 
 
+  /*
+    If NFC is already running,
+    DON'T start another reader.
+    Just tell the user to tap the next card.
+  */
+
+  if (nfcStarted) {
+
+    status.className = "";
+
+    status.innerHTML =
+      "📡 Ready. Tap the next student's card.";
+
+    return;
+  }
+
+
   try {
 
-    const ndef =
+    nfcReader =
       new NDEFReader();
 
 
-    await ndef.scan();
+    await nfcReader.scan();
+
+
+    nfcStarted = true;
 
 
     status.className = "";
 
     status.innerHTML =
-      "📡 Hold the student's card against the back of the phone...";
+      "📡 Ready. Tap the student's card.";
 
 
-    ndef.onreading =
+    /*
+      This listener stays active.
+
+      Every new card tap triggers this.
+    */
+
+    nfcReader.addEventListener(
+      "reading",
       async event => {
 
 
-        currentSerial =
-          event.serialNumber;
+        /*
+          Prevent the same physical tap
+          from being processed twice while
+          we're still looking up the student.
+        */
 
+        if (processingCard) {
+          return;
+        }
+
+
+        processingCard = true;
+
+
+        try {
+
+          currentSerial =
+            event.serialNumber;
+
+
+          if (!currentSerial) {
+
+            showError(
+              "Card detected, but no serial number was available."
+            );
+
+            return;
+          }
+
+
+          status.className = "";
+
+          status.innerHTML =
+            "Card detected. Looking up student...";
+
+
+          await lookupStudent();
+
+
+        }
+
+        catch (error) {
+
+          showError(
+            error.message
+          );
+
+        }
+
+        finally {
+
+          /*
+            Small delay before another
+            card can be processed.
+          */
+
+          setTimeout(
+            function() {
+              processingCard = false;
+            },
+            1000
+          );
+
+        }
+
+      }
+    );
+
+
+    nfcReader.addEventListener(
+      "readingerror",
+      function() {
+
+        status.className =
+          "error";
 
         status.innerHTML =
-          "Card detected. Looking up student...";
+          "⚠️ Card detected, but it couldn't be read. Try again.";
 
-
-        await lookupStudent();
-
-      };
+      }
+    );
 
 
   }
@@ -439,7 +540,6 @@ async function scanNfc() {
   }
 
 }
-
 
 
 /* =====================================================
@@ -1109,39 +1209,77 @@ async function borrowBook() {
       Reset for next student.
     */
 
-    currentSerial =
-      null;
-
-
-    document
-      .getElementById("bookBarcode")
-      .value =
-        "";
-
-
-    document
-      .getElementById("studentFoundBox")
-      .style.display =
-        "none";
-
-
-    document
-      .getElementById("borrowBox")
-      .style.display =
-        "none";
-
-
     /*
-      Change button wording to make
-      next action obvious.
-    */
+  Reset checkout,
+  but KEEP NFC scanner running.
+*/
 
-    document
-      .getElementById("nfcButton")
-      .innerText =
-        "📡 Tap Next Student Card";
+currentSerial = null;
 
-  }
+lastDetectedBarcode = null;
+
+
+document
+  .getElementById("bookBarcode")
+  .value = "";
+
+
+document
+  .getElementById("studentFoundBox")
+  .style.display = "none";
+
+
+document
+  .getElementById("borrowBox")
+  .style.display = "none";
+
+
+document
+  .getElementById("newStudentBox")
+  .style.display = "none";
+
+
+document
+  .getElementById("newStudentName")
+  .value = "";
+
+
+/*
+  NFC is already listening,
+  so don't restart it.
+*/
+
+document
+  .getElementById("nfcButton")
+  .innerText =
+    "📡 NFC Reader Active";
+
+
+const status =
+  document.getElementById("status");
+
+
+status.className =
+  "success";
+
+
+status.innerHTML =
+
+  "✅ Borrowed!" +
+
+  "<br>" +
+
+  escapeHtml(result.studentName) +
+
+  "<br>" +
+
+  "Due: " +
+
+  escapeHtml(result.dueDate) +
+
+  "<br><br>" +
+
+  "📡 <strong>Ready for next student.</strong>";
 
   catch (error) {
 
