@@ -610,8 +610,8 @@ const API_URL =
 
 
 let nfcReader = null;
-let nfcStarted = false;
-let processingCard = false;
+let nfcController = null;
+let nfcScanning = false;
 
 let currentSerial = null;
 
@@ -629,16 +629,13 @@ function showScreen(id) {
 
   document
     .querySelectorAll(".screen")
-    .forEach(
-      screen =>
-        screen.classList.remove("active")
+    .forEach(screen =>
+      screen.classList.remove("active")
     );
-
 
   document
     .getElementById(id)
     .classList.add("active");
-
 }
 
 
@@ -647,27 +644,26 @@ function openBorrow() {
   showScreen("borrowScreen");
 
   resetBorrowScreen();
-
 }
 
 
 function openReturn() {
 
   stopBarcodeScanner();
+  stopNfcScanner();
 
   showScreen("returnScreen");
-
 }
 
 
 function goHome() {
 
   stopBarcodeScanner();
+  stopNfcScanner();
 
   currentSerial = null;
 
   showScreen("homeScreen");
-
 }
 
 
@@ -692,19 +688,13 @@ async function scanNfc() {
 
 
   /*
-    Reader is already running.
-    Just wait for the next card.
+    Always start a fresh NFC session.
   */
 
-  if (nfcStarted) {
+  stopNfcScanner();
 
-    status.className = "";
 
-    status.innerHTML =
-      "📡 Waiting for student card...";
-
-    return;
-  }
+  currentSerial = null;
 
 
   try {
@@ -713,24 +703,30 @@ async function scanNfc() {
       "loading";
 
     status.innerHTML =
-      '<span class="spinner"></span>Starting card reader...';
+      '<span class="spinner"></span>Waiting for student card...';
 
 
     nfcReader =
       new NDEFReader();
 
 
-    await nfcReader.scan();
+    nfcController =
+      new AbortController();
 
 
-    nfcStarted =
+    await nfcReader.scan({
+      signal: nfcController.signal
+    });
+
+
+    nfcScanning =
       true;
 
 
     status.className = "";
 
     status.innerHTML =
-      "📡 Waiting for student card...";
+      "📡 Hold the student's card against the back of the phone.";
 
 
     nfcReader.addEventListener(
@@ -738,58 +734,52 @@ async function scanNfc() {
       async event => {
 
         /*
-          Ignore NFC while not on
-          the Borrow screen.
+          Only process one card.
         */
 
-        if (
-          !document
-            .getElementById("borrowScreen")
-            .classList.contains("active")
-        ) {
+        if (!nfcScanning) {
           return;
         }
 
 
-        if (
-          processingCard ||
-          currentSerial
-        ) {
+        const serial =
+          event.serialNumber;
+
+
+        if (!serial) {
+
+          showError(
+            "Card detected but no serial number was available."
+          );
+
+          stopNfcScanner();
+
           return;
         }
 
 
-        processingCard =
-          true;
+        /*
+          We have the card.
+          End NFC immediately so this
+          session cannot interfere later.
+        */
+
+        currentSerial =
+          serial;
+
+
+        stopNfcScanner();
+
+
+        status.className =
+          "loading";
+
+
+        status.innerHTML =
+          '<span class="spinner"></span>Finding student...';
 
 
         try {
-
-          const serial =
-            event.serialNumber;
-
-
-          if (!serial) {
-
-            showError(
-              "Card detected but no serial number was available."
-            );
-
-            return;
-          }
-
-
-          currentSerial =
-            serial;
-
-
-          status.className =
-            "loading";
-
-
-          status.innerHTML =
-            '<span class="spinner"></span>Finding student...';
-
 
           await lookupStudent();
 
@@ -797,21 +787,11 @@ async function scanNfc() {
 
         catch (error) {
 
-          currentSerial = null;
+          currentSerial =
+            null;
 
           showError(
             error.message
-          );
-
-        }
-
-        finally {
-
-          setTimeout(
-            () => {
-              processingCard = false;
-            },
-            600
           );
 
         }
@@ -828,6 +808,8 @@ async function scanNfc() {
           "Card detected but couldn't be read. Try again."
         );
 
+        stopNfcScanner();
+
       }
     );
 
@@ -835,18 +817,60 @@ async function scanNfc() {
 
   catch (error) {
 
-    nfcStarted =
-      false;
+    /*
+      AbortError is expected when
+      we intentionally stop scanning.
+    */
 
-    nfcReader =
-      null;
+    if (error.name !== "AbortError") {
 
+      showError(
+        error.message
+      );
 
-    showError(
-      error.message
-    );
+    }
+
+    stopNfcScanner();
 
   }
+
+}
+
+
+/* ==========================================
+   STOP NFC
+========================================== */
+
+function stopNfcScanner() {
+
+  if (nfcController) {
+
+    try {
+
+      nfcController.abort();
+
+    }
+
+    catch (error) {
+
+      console.log(
+        "NFC abort:",
+        error
+      );
+
+    }
+
+  }
+
+
+  nfcReader =
+    null;
+
+  nfcController =
+    null;
+
+  nfcScanning =
+    false;
 
 }
 
@@ -1427,11 +1451,6 @@ async function borrowBook() {
     stopBarcodeScanner();
 
 
-    /*
-      THIS is the loading message while
-      Google Books / Open Library is searched.
-    */
-
     status.className =
       "loading";
 
@@ -1491,8 +1510,7 @@ async function borrowBook() {
 
 
     /*
-      Leave success visible briefly,
-      then return to clean Tap Student Card.
+      Show confirmation briefly.
     */
 
     setTimeout(
@@ -1526,7 +1544,13 @@ async function borrowBook() {
 
 function resetBorrowScreen() {
 
+  /*
+    Shut down anything from the
+    previous checkout.
+  */
+
   stopBarcodeScanner();
+  stopNfcScanner();
 
 
   currentSerial =
@@ -1586,9 +1610,7 @@ function resetBorrowScreen() {
   status.className = "";
 
   status.innerHTML =
-    nfcStarted
-      ? "Ready for student card."
-      : "Tap above to start.";
+    "Ready for student card.";
 
 }
 
